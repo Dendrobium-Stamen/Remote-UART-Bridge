@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP-NOW Pairing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Space+Grotesk:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface-2: #1e1e1e;
+            --border: #2a2a2a;
+            --accent: #00e676;
+            --accent-dim: #00c85340;
+            --danger: #ff5252;
+            --danger-dim: #ff525230;
+            --warning: #ffd740;
+            --text: #e8e6e3;
+            --text-muted: #6b6b6b;
+            --text-dim: #444;
+            --radius: 12px;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 15% 20%, #00e67608 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 80%, #00e67605 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ---- Header ---- */
+        .header {
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            animation: fadeUp 0.5s ease forwards;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .header h1 span {
+            color: var(--accent);
+        }
+
+        .header .subtitle {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        .mac-badge {
+            display: inline-block;
+            margin-top: 0.8rem;
+            padding: 0.3rem 0.8rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+        }
+
+        /* ---- Cards ---- */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeUp 0.5s ease forwards;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .card:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.2rem;
+        }
+
+        .card-title .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        /* ---- Input Group ---- */
+        .input-group {
+            display: flex;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-group input,
+        .input-group select {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: var(--accent);
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-dim);
+        }
+
+        select option {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        /* ---- Buttons ---- */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: #0a0a0a;
+        }
+
+        .btn-accent:hover {
+            background: #00ff88;
+            box-shadow: 0 0 20px var(--accent-dim);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger-dim);
+            font-size: 0.7rem;
+            padding: 0.35rem 0.7rem;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-dim);
+        }
+
+        .btn-scan {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-scan.scanning {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .btn-scan.scanning::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+            animation: shimmer 1.2s infinite;
+        }
+
+        @keyframes shimmer {
+            from {
+                transform: translateX(-100%);
+            }
+
+            to {
+                transform: translateX(100%);
+            }
+        }
+
+        /* ---- Peer List ---- */
+        .peer-list {
+            list-style: none;
+        }
+
+        .peer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 0.8rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: border-color 0.2s;
+        }
+
+        .peer-item:hover {
+            border-color: #333;
+        }
+
+        .peer-mac {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            color: var(--text);
+            letter-spacing: 0.04em;
+        }
+
+        .peer-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .peer-tag {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .tag-sta {
+            background: #1a237e30;
+            color: #82b1ff;
+        }
+
+        .tag-encrypt {
+            background: var(--danger-dim);
+            color: var(--danger);
+        }
+
+        /* ---- Scan Results ---- */
+        .scan-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0.8rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+        }
+
+        .scan-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .scan-mac {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            color: var(--text);
+            letter-spacing: 0.04em;
+        }
+
+        .rssi-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 16px;
+        }
+
+        .rssi-bar span {
+            width: 3px;
+            background: var(--text-dim);
+            border-radius: 1px;
+            transition: background 0.3s;
+        }
+
+        .rssi-bar span.active {
+            background: var(--accent);
+        }
+
+        .rssi-val {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            min-width: 3.5rem;
+        }
+
+        /* ---- Send ---- */
+        .send-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+        }
+
+        .send-row select {
+            flex: 0 0 200px;
+        }
+
+        .send-row input {
+            flex: 1;
+        }
+
+        /* ---- Toast ---- */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.error {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .toast.success {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ---- Empty State ---- */
+        .empty {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-dim);
+            font-size: 0.82rem;
+            font-style: italic;
+        }
+
+        /* ---- Stats ---- */
+        .stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.8rem;
+        }
+
+        .stat {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stat .num {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* ---- Animations ---- */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .item-enter {
+            animation: fadeUp 0.3s ease forwards;
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 500px) {
+            .container {
+                padding: 1.2rem 1rem 3rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .send-row {
+                flex-direction: column;
+            }
+
+            .send-row select {
+                flex: auto;
+                width: 100%;
+            }
+
+            .send-row input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <h1><span>ESP-NOW</span> Pairing</h1>
+            <div class="subtitle">remote uart bridge config</div>
+            <div class="mac-badge" id="localMac">--:--:--:--:--:--</div>
+            <div class="stats">
+                <div class="stat">Peers <span class="num" id="peerCount">0</span></div>
+            </div>
+        </div>
+
+        <!-- Scan -->
+        <div class="card">
+            <div class="card-title">
+                <div class="dot"></div>Scan Nearby Devices
+            </div>
+            <div style="display:flex;gap:0.6rem;margin-bottom:1rem;">
+                <button class="btn btn-accent btn-scan" id="scanBtn" onclick="doScan()">
+                    Scan
+                </button>
+                <button class="btn btn-outline" onclick="clearScan()">Clear</button>
+            </div>
+            <div id="scanResults">
+                <div class="empty">Click Scan to discover nearby ESP-NOW devices</div>
+            </div>
+        </div>
+
+        <!-- Manual Add -->
+        <div class="card">
+            <div class="card-title">
+                <div class="dot"></div>Add Peer Manually
+            </div>
+            <div class="input-group">
+                <input type="text" id="addMac" placeholder="AA:BB:CC:DD:EE:FF" maxlength="17" spellcheck="false"
+                    autocomplete="off">
+                <button class="btn btn-accent" onclick="addPeer()">Add</button>
+            </div>
+        </div>
+
+        <!-- Peer List -->
+        <div class="card">
+            <div class="card-title">
+                <div class="dot"></div>Paired Peers
+            </div>
+            <ul class="peer-list" id="peerList">
+                <li class="empty">No peers paired yet</li>
+            </ul>
+        </div>
+
+        <!-- Send Test -->
+        <div class="card">
+            <div class="card-title">
+                <div class="dot"></div>Send Test
+            </div>
+            <div class="send-row">
+                <select id="sendTarget">
+                    <option value="">Select peer...</option>
+                </select>
+                <input type="text" id="sendData" placeholder="Message" spellcheck="false" autocomplete="off">
+                <button class="btn btn-accent" onclick="sendTest()">Send</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* ---- Toast ---- */
+        let toastTimer;
+        function showToast(msg, type = '') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show ' + type;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.className = 'toast', 2500);
+        }
+
+        /* ---- API helpers ---- */
+        async function api(method, url, body) {
+            const opts = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) opts.body = JSON.stringify(body);
+            const resp = await fetch(url, opts);
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(text || resp.statusText);
+            }
+            return resp.json();
+        }
+
+        /* ---- RSSI bar ---- */
+        function rssiBar(rssi) {
+            const levels = [-80, -70, -60, -50, -40];
+            let html = '<div class="rssi-bar">';
+            for (let i = 0; i < 5; i++) {
+                html += `<span${rssi >= levels[i] ? ' class="active"' : ''} style="height:${4 + i * 3}px"></span>`;
+            }
+            html += `</div><span class="rssi-val">${rssi} dBm</span>`;
+            return html;
+        }
+
+        /* ---- Load status ---- */
+        async function loadStatus() {
+            try {
+                const s = await api('GET', '/api/status');
+                document.getElementById('localMac').textContent = s.local_mac;
+                document.getElementById('peerCount').textContent = s.peer_count;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        /* ---- Load peers ---- */
+        async function loadPeers() {
+            try {
+                const peers = await api('GET', '/api/peers');
+                const list = document.getElementById('peerList');
+                const sel = document.getElementById('sendTarget');
+
+                if (peers.length === 0) {
+                    list.innerHTML = '<li class="empty">No peers paired yet</li>';
+                    sel.innerHTML = '<option value="">Select peer...</option>';
+                    return;
+                }
+
+                list.innerHTML = '';
+                sel.innerHTML = '<option value="">Select peer...</option>';
+
+                peers.forEach(p => {
+                    const li = document.createElement('li');
+                    li.className = 'peer-item item-enter';
+                    li.innerHTML = `
+                <span class="peer-mac">${p.mac}</span>
+                <div class="peer-info">
+                    <span class="peer-tag tag-sta">${p.iface}</span>
+                    ${p.encrypt ? '<span class="peer-tag tag-encrypt">ENC</span>' : ''}
+                    <button class="btn btn-danger" onclick="delPeer('${p.mac}')">Remove</button>
+                </div>`;
+                    list.appendChild(li);
+
+                    const opt = document.createElement('option');
+                    opt.value = p.mac;
+                    opt.textContent = p.mac;
+                    sel.appendChild(opt);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        /* ---- Scan ---- */
+        async function doScan() {
+            const btn = document.getElementById('scanBtn');
+            btn.classList.add('scanning');
+            btn.textContent = 'Scanning...';
+            document.getElementById('scanResults').innerHTML = '<div class="empty">Scanning...</div>';
+
+            try {
+                const devices = await api('POST', '/api/scan');
+                const div = document.getElementById('scanResults');
+
+                if (devices.length === 0) {
+                    div.innerHTML = '<div class="empty">No devices found</div>';
+                    return;
+                }
+
+                div.innerHTML = '';
+                devices.forEach(d => {
+                    const item = document.createElement('div');
+                    item.className = 'scan-item item-enter';
+                    item.innerHTML = `
+                <div class="scan-left">
+                    <span class="scan-mac">${d.mac}</span>
+                    ${rssiBar(d.rssi)}
+                </div>
+                <div>
+                    ${d.is_peer
+                            ? '<span class="peer-tag tag-sta" style="font-size:0.7rem">PAIRED</span>'
+                            : `<button class="btn btn-accent" style="padding:0.3rem 0.7rem;font-size:0.7rem" onclick="addPeerFromScan('${d.mac}')">Pair</button>`
+                        }
+                </div>`;
+                    div.appendChild(item);
+                });
+            } catch (e) {
+                showToast('Scan failed: ' + e.message, 'error');
+            } finally {
+                btn.classList.remove('scanning');
+                btn.textContent = 'Scan';
+            }
+        }
+
+        function clearScan() {
+            document.getElementById('scanResults').innerHTML =
+                '<div class="empty">Click Scan to discover nearby ESP-NOW devices</div>';
+        }
+
+        /* ---- Add Peer ---- */
+        async function addPeer() {
+            const mac = document.getElementById('addMac').value.trim().toUpperCase();
+
+            if (!/^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/.test(mac)) {
+                showToast('Invalid MAC format', 'error');
+                return;
+            }
+
+            try {
+                await api('POST', '/api/peer/add', { mac, channel: 0, encrypt: false });
+                showToast('Peer added: ' + mac, 'success');
+                document.getElementById('addMac').value = '';
+                loadStatus();
+                loadPeers();
+            } catch (e) {
+                showToast('Add failed: ' + e.message, 'error');
+            }
+        }
+
+        async function addPeerFromScan(mac) {
+            try {
+                await api('POST', '/api/peer/add', { mac, channel: 0, encrypt: false });
+                showToast('Paired: ' + mac, 'success');
+                loadStatus();
+                loadPeers();
+                doScan();
+            } catch (e) {
+                showToast('Pair failed: ' + e.message, 'error');
+            }
+        }
+
+        /* ---- Delete Peer ---- */
+        async function delPeer(mac) {
+            try {
+                await api('POST', '/api/peer/del', { mac });
+                showToast('Removed: ' + mac, 'success');
+                loadStatus();
+                loadPeers();
+            } catch (e) {
+                showToast('Remove failed: ' + e.message, 'error');
+            }
+        }
+
+        /* ---- Send Test ---- */
+        async function sendTest() {
+            const mac = document.getElementById('sendTarget').value;
+            const data = document.getElementById('sendData').value;
+
+            if (!mac) { showToast('Select a peer first', 'error'); return; }
+            if (!data) { showToast('Enter a message', 'error'); return; }
+
+            try {
+                await api('POST', '/api/send', { mac, data });
+                showToast('Sent to ' + mac, 'success');
+                document.getElementById('sendData').value = '';
+            } catch (e) {
+                showToast('Send failed: ' + e.message, 'error');
+            }
+        }
+
+        /* ---- Auto refresh ---- */
+        loadStatus();
+        loadPeers();
+        setInterval(() => { loadStatus(); loadPeers(); }, 10000);
+    </script>
+</body>
+
+</html>
