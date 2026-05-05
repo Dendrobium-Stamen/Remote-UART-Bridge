@@ -19,7 +19,6 @@
             --accent-dim: #00c85340;
             --danger: #ff5252;
             --danger-dim: #ff525230;
-            --warning: #ffd740;
             --text: #e8e6e3;
             --text-muted: #6b6b6b;
             --text-dim: #444;
@@ -149,8 +148,7 @@
             margin-bottom: 1rem;
         }
 
-        .input-group input,
-        .input-group select {
+        .input-group input {
             flex: 1;
             background: var(--bg);
             border: 1px solid var(--border);
@@ -163,18 +161,12 @@
             transition: border-color 0.2s;
         }
 
-        .input-group input:focus,
-        .input-group select:focus {
+        .input-group input:focus {
             border-color: var(--accent);
         }
 
         .input-group input::placeholder {
             color: var(--text-dim);
-        }
-
-        select option {
-            background: var(--surface);
-            color: var(--text);
         }
 
         /* ---- Buttons ---- */
@@ -247,13 +239,8 @@
         }
 
         @keyframes shimmer {
-            from {
-                transform: translateX(-100%);
-            }
-
-            to {
-                transform: translateX(100%);
-            }
+            from { transform: translateX(-100%); }
+            to   { transform: translateX(100%); }
         }
 
         /* ---- Peer List ---- */
@@ -282,30 +269,6 @@
             font-size: 0.82rem;
             color: var(--text);
             letter-spacing: 0.04em;
-        }
-
-        .peer-info {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .peer-tag {
-            font-family: var(--mono);
-            font-size: 0.65rem;
-            padding: 0.15rem 0.5rem;
-            border-radius: 4px;
-            letter-spacing: 0.05em;
-        }
-
-        .tag-sta {
-            background: #1a237e30;
-            color: #82b1ff;
-        }
-
-        .tag-encrypt {
-            background: var(--danger-dim);
-            color: var(--danger);
         }
 
         /* ---- Scan Results ---- */
@@ -358,6 +321,19 @@
             min-width: 3.5rem;
         }
 
+        .peer-tag {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .tag-sta {
+            background: #1a237e30;
+            color: #82b1ff;
+        }
+
         /* ---- Send ---- */
         .send-row {
             display: flex;
@@ -371,6 +347,36 @@
 
         .send-row input {
             flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .send-row input:focus {
+            border-color: var(--accent);
+        }
+
+        .send-row select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select option {
+            background: var(--surface);
+            color: var(--text);
         }
 
         /* ---- Toast ---- */
@@ -437,15 +443,8 @@
 
         /* ---- Animations ---- */
         @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .item-enter {
@@ -612,12 +611,8 @@
                     const li = document.createElement('li');
                     li.className = 'peer-item item-enter';
                     li.innerHTML = `
-                <span class="peer-mac">${p.mac}</span>
-                <div class="peer-info">
-                    <span class="peer-tag tag-sta">${p.iface}</span>
-                    ${p.encrypt ? '<span class="peer-tag tag-encrypt">ENC</span>' : ''}
-                    <button class="btn btn-danger" onclick="delPeer('${p.mac}')">Remove</button>
-                </div>`;
+                        <span class="peer-mac">${p.mac}</span>
+                        <button class="btn btn-danger" onclick="delPeer('${p.mac}')">Remove</button>`;
                     list.appendChild(li);
 
                     const opt = document.createElement('option');
@@ -651,16 +646,16 @@
                     const item = document.createElement('div');
                     item.className = 'scan-item item-enter';
                     item.innerHTML = `
-                <div class="scan-left">
-                    <span class="scan-mac">${d.mac}</span>
-                    ${rssiBar(d.rssi)}
-                </div>
-                <div>
-                    ${d.is_peer
-                            ? '<span class="peer-tag tag-sta" style="font-size:0.7rem">PAIRED</span>'
-                            : `<button class="btn btn-accent" style="padding:0.3rem 0.7rem;font-size:0.7rem" onclick="addPeerFromScan('${d.mac}')">Pair</button>`
-                        }
-                </div>`;
+                        <div class="scan-left">
+                            <span class="scan-mac">${d.mac}</span>
+                            ${rssiBar(d.rssi)}
+                        </div>
+                        <div>
+                            ${d.is_peer
+                                ? '<span class="peer-tag tag-sta" style="font-size:0.7rem">PAIRED</span>'
+                                : `<button class="btn btn-accent" style="padding:0.3rem 0.7rem;font-size:0.7rem" onclick="addPeerFromScan('${d.mac}')">Pair</button>`
+                            }
+                        </div>`;
                     div.appendChild(item);
                 });
             } catch (e) {
@@ -686,7 +681,7 @@
             }
 
             try {
-                await api('POST', '/api/peer/add', { mac, channel: 0, encrypt: false });
+                await api('POST', '/api/peer/add', { mac, channel: 0 });
                 showToast('Peer added: ' + mac, 'success');
                 document.getElementById('addMac').value = '';
                 loadStatus();
@@ -698,7 +693,7 @@
 
         async function addPeerFromScan(mac) {
             try {
-                await api('POST', '/api/peer/add', { mac, channel: 0, encrypt: false });
+                await api('POST', '/api/peer/add', { mac, channel: 0 });
                 showToast('Paired: ' + mac, 'success');
                 loadStatus();
                 loadPeers();

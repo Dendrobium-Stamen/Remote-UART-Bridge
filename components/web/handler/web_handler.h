@@ -5,5 +5,6 @@
 
 esp_err_t page_handler(httpd_req_t *req);
 esp_err_t api_status_handler(httpd_req_t *req);
+esp_err_t api_peers_handler(httpd_req_t *req);
 
 #endif

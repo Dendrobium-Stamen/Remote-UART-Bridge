@@ -8,6 +8,8 @@
 
 #include "message_manager.h"
 
+static const char *TAG = "Web status handler";
+
 esp_err_t api_status_handler(httpd_req_t *req)
 {
     uint8_t mac[6];
@@ -36,5 +38,5 @@ esp_err_t api_status_handler(httpd_req_t *req)
 
     free(json_str);
 
-    return ESP_OK;
+    return err;
 }
