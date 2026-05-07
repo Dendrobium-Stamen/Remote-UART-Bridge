@@ -47,7 +47,7 @@ message_manager_error_t message_manager_remove_peer_mac(uint8_t *peer_mac);
 message_manager_error_t message_manager_get_peer_mac_count(uint8_t *count);
 message_manager_error_t message_manager_get_peer_mac(int index, uint8_t *mac);
 message_manager_error_t message_manager_send_scan();
-message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac);
+message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac, uint8_t *data, size_t data_length);
 message_manager_scan_result_t *message_manager_get_scan_result(uint64_t wait_ms);
 
 message_manager_error_t message_manager_reset_peer_mac();

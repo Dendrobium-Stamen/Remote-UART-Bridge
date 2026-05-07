@@ -73,7 +73,8 @@ void message_manager_esp_now_recv_callback(const esp_now_recv_info_t *esp_now_re
         switch (message_manager_command)
         {
         case MESSAGE_MANAGER_COMMAND_SCAN:
-            message_manager_send_scan_response(src_addr);
+            message_manager_send_scan_response(src_addr, pkt_data, data_length);
+            ESP_LOGI(TAG, "Received scan command, sending scan response, mac : " MACSTR " ", MAC2STR(src_addr));
             break;
         case MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE:
             if (data_length < sizeof(message_manager.scan_result.timestamp))
@@ -294,20 +295,35 @@ message_manager_error_t message_manager_send_scan()
     return MESSAGE_MANAGER_OK;
 }
 
-message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac)
+message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac, uint8_t *data, size_t data_length)
 {
     if (src_mac == NULL)
+    {
+        ESP_LOGI(TAG, "Failed to send scan response, src_mac is NULL");
         return MESSAGE_MANAGER_ERROR_SEND_SCAN_RESPONSE;
+    }
 
-    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, NULL, 0);
+    ESP_LOG_BUFFER_HEX(TAG, data, data_length);
+
+    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, data, data_length);
     size_t packet_size = lwrb_get_full(&message_manager.send_rb);
+
+    esp_now_peer_info_t esp_now_peer_info = {};
+    memcpy(esp_now_peer_info.peer_addr, src_mac, ESP_NOW_ETH_ALEN);
+    esp_now_peer_info.channel = 0;
+    esp_now_peer_info.ifidx = WIFI_IF_AP;
+    esp_now_peer_info.encrypt = false;
+    ESP_ERROR_CHECK(esp_now_add_peer(&esp_now_peer_info));
 
     esp_err_t err = esp_now_send(src_mac, message_manager_esp_now_data_send_buffer, packet_size);
     if (err != ESP_OK)
     {
+        ESP_LOGI(TAG, "Failed to send scan response to peer " MACSTR ", error: %s", MAC2STR(src_mac), esp_err_to_name(err));
         lwrb_reset(&message_manager.send_rb);
+        esp_now_del_peer(src_mac);
     }
 
+    esp_now_del_peer(src_mac);
     lwrb_reset(&message_manager.send_rb);
 
     return MESSAGE_MANAGER_OK;
