@@ -18,7 +18,6 @@
 
 #ifdef CONFIG_REMOTE_UART_ROLE_SERVER
 #include "usb_bridge.h"
-
 #endif
 
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
