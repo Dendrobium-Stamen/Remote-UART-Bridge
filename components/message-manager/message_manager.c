@@ -76,6 +76,9 @@ void message_manager_esp_now_recv_callback(const esp_now_recv_info_t *esp_now_re
             message_manager_send_scan_response(src_addr);
             break;
         case MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE:
+            ESP_LOGI(TAG, "Received scan response from " MACSTR ", RSSI: %d, data length: %d", MAC2STR(src_addr), rssi, data_length);
+            ESP_LOG_BUFFER_HEX(TAG, pkt_data, data_length);
+
             if (data_length < sizeof(message_manager.scan_result.timestamp))
                 return;
 
@@ -280,7 +283,7 @@ message_manager_error_t message_manager_send_scan()
     memset(&message_manager.scan_result, 0, sizeof(message_manager.scan_result));
     message_manager.scan_result.timestamp = esp_timer_get_time();
 
-    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN, &message_manager.scan_result.timestamp, 0);
+    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN, &message_manager.scan_result.timestamp, sizeof(message_manager.scan_result.timestamp));
     size_t packet_size = lwrb_get_full(&message_manager.send_rb);
 
     esp_err_t err = esp_now_send(message_manager_espnow_broadcast_mac, message_manager_esp_now_data_send_buffer, packet_size);
@@ -299,10 +302,7 @@ message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac)
     if (src_mac == NULL)
         return MESSAGE_MANAGER_ERROR_SEND_SCAN_RESPONSE;
 
-    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, NULL, 0);
-    size_t packet_size = lwrb_get_full(&message_manager.send_rb);
-
-    esp_err_t err = esp_now_send(src_mac, message_manager_esp_now_data_send_buffer, packet_size);
+    esp_err_t err = esp_now_send(src_mac, message_manager_esp_now_data_send_buffer, 0);
     if (err != ESP_OK)
     {
         lwrb_reset(&message_manager.send_rb);

@@ -548,6 +548,9 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        /* ---- 已知 peer 集合，用于对比新增 ---- */
+        const knownPeers = new Set();
+
         /* ---- Toast ---- */
         let toastTimer;
         function showToast(msg, type = '') {
@@ -602,15 +605,33 @@
                 if (peers.length === 0) {
                     list.innerHTML = '<li class="empty">No peers paired yet</li>';
                     sel.innerHTML = '<option value="">Select peer...</option>';
+                    knownPeers.clear();
                     return;
                 }
 
+                /* 收集当前 MAC 列表 */
+                const currentMacs = new Set(peers.map(p => p.mac));
+
+                /* 找出新增的 MAC */
+                const newMacs = new Set();
+                peers.forEach(p => {
+                    if (!knownPeers.has(p.mac)) {
+                        newMacs.add(p.mac);
+                    }
+                });
+
+                /* 更新已知集合 */
+                knownPeers.clear();
+                currentMacs.forEach(m => knownPeers.add(m));
+
+                /* 渲染列表 */
                 list.innerHTML = '';
                 sel.innerHTML = '<option value="">Select peer...</option>';
 
                 peers.forEach(p => {
                     const li = document.createElement('li');
-                    li.className = 'peer-item item-enter';
+                    /* 只有新增的 peer 才加动画 */
+                    li.className = 'peer-item' + (newMacs.has(p.mac) ? ' item-enter' : '');
                     li.innerHTML = `
                         <span class="peer-mac">${p.mac}</span>
                         <button class="btn btn-danger" onclick="delPeer('${p.mac}')">Remove</button>`;
