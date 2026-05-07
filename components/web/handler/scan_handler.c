@@ -1,40 +1,43 @@
-#include "stdio.h"
+#include <string.h>
+#include <esp_log.h>
+#include <esp_http_server.h>
+#include <esp_wifi.h>
+#include <esp_now.h>
+#include <cJSON.h>
 
-#include "esp_log.h"
-#include "esp_http_server.h"
+static const char *TAG = "http_server";
 
 /* ---- POST /api/scan ---- */
-static esp_err_t api_scan_handler(httpd_req_t *req)
+esp_err_t api_scan_handler(httpd_req_t *req)
 {
-    // s_scanned_count = 0;
-    // s_scanning = true;
+    /* 执行扫描（阻塞约 2 秒） */
 
-    // /* 广播扫描请求 */
-    // uint8_t broadcast[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    // uint8_t scan_msg[] = "SCAN";
-    // esp_now_send(broadcast, scan_msg, sizeof(scan_msg));
-
-    // /* 等待 2 秒收集响应 */
-    // vTaskDelay(pdMS_TO_TICKS(2000));
-    // s_scanning = false;
-
-    // /* 返回结果 */
+    /* 构建 JSON 响应 */
     // cJSON *arr = cJSON_CreateArray();
-    // for (int i = 0; i < s_scanned_count; i++)
+
+    // for (int i = 0; i < g_scan_count; i++)
     // {
-    //     cJSON *obj = cJSON_CreateObject();
     //     char mac_str[18];
-    //     snprintf(mac_str, sizeof(mac_str), MACSTR, MAC2STR(s_scanned[i].mac));
+    //     snprintf(mac_str, sizeof(mac_str),
+    //              "%02X:%02X:%02X:%02X:%02X:%02X",
+    //              g_scan_results[i].mac[0], g_scan_results[i].mac[1],
+    //              g_scan_results[i].mac[2], g_scan_results[i].mac[3],
+    //              g_scan_results[i].mac[4], g_scan_results[i].mac[5]);
+
+    //     cJSON *obj = cJSON_CreateObject();
     //     cJSON_AddStringToObject(obj, "mac", mac_str);
-    //     cJSON_AddNumberToObject(obj, "rssi", s_scanned[i].rssi);
-    //     cJSON_AddBoolToObject(obj, "is_peer", esp_now_is_peer_exist(s_scanned[i].mac));
+    //     cJSON_AddNumberToObject(obj, "rssi", g_scan_results[i].rssi);
+    //     cJSON_AddBoolToObject(obj, "is_peer", g_scan_results[i].is_peer);
     //     cJSON_AddItemToArray(arr, obj);
     // }
 
-    // const char *resp = cJSON_PrintUnformatted(arr);
-    // httpd_resp_set_type(req, "application/json");
-    // httpd_resp_sendstr(req, resp);
-    // cJSON_free((void *)resp);
+    // char *json_str = cJSON_PrintUnformatted(arr);
     // cJSON_Delete(arr);
+
+    // httpd_resp_set_type(req, "application/json");
+    // esp_err_t err = httpd_resp_send(req, json_str, HTTPD_RESP_USE_STRLEN);
+
+    // free(json_str);
+    // return err;
     return ESP_OK;
 }

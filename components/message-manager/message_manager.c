@@ -7,6 +7,7 @@
 #include "esp_err.h"
 #include "esp_now.h"
 #include "esp_mac.h"
+#include "esp_timer.h"
 
 #include "lwpkt.h"
 
@@ -22,6 +23,8 @@ uint8_t message_manager_esp_now_data_send_buffer[MESSAGE_MANAGER_ESP_NOW_DATA_SE
 
 typedef enum
 {
+    MESSAGE_MANAGER_COMMAND_SCAN,
+    MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE,
     MESSAGE_MANAGER_COMMAND_PEER,
     MESSAGE_MANAGER_COMMAND_USB_TO_UART_DATA,
     MESSAGE_MANAGER_COMMAND_UART_TO_USB_DATA,
@@ -36,6 +39,8 @@ typedef struct
     lwrb_t send_rb;
 
     nvs_store_t *nvs_store;
+
+    message_manager_scan_result_t scan_result;
 
     message_manager_usb_to_uart_data_callback_t *usb_to_uart_data_callback;
     message_manager_line_coding_changed_baud_callback_t *line_coding_changed_baud_callback;
@@ -67,6 +72,29 @@ void message_manager_esp_now_recv_callback(const esp_now_recv_info_t *esp_now_re
 
         switch (message_manager_command)
         {
+        case MESSAGE_MANAGER_COMMAND_SCAN:
+            message_manager_send_scan_response(src_addr);
+            break;
+        case MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE:
+            if (data_length < sizeof(message_manager.scan_result.timestamp))
+                return;
+
+            if (memcmp(&message_manager.scan_result.timestamp, pkt_data, sizeof(message_manager.scan_result.timestamp)) != 0)
+            {
+                ESP_LOGW(TAG, "Scan response timestamp mismatch");
+                return;
+            }
+
+            if (message_manager.scan_result.count >= ESP_NOW_MAX_ENCRYPT_PEER_NUM)
+            {
+                return;
+            }
+
+            memcpy(message_manager.scan_result.macs[message_manager.scan_result.count], src_addr, ESP_NOW_ETH_ALEN);
+            message_manager.scan_result.rssi[message_manager.scan_result.count] = rssi;
+            message_manager.scan_result.count++;
+
+            break;
         case MESSAGE_MANAGER_COMMAND_PEER:
             message_manager_add_peer_mac(src_addr);
             break;
@@ -245,6 +273,51 @@ size_t message_manager_send(uint8_t *data, size_t size)
     }
 
     return size;
+}
+
+message_manager_error_t message_manager_send_scan()
+{
+    memset(&message_manager.scan_result, 0, sizeof(message_manager.scan_result));
+    message_manager.scan_result.timestamp = esp_timer_get_time();
+
+    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN, &message_manager.scan_result.timestamp, 0);
+    size_t packet_size = lwrb_get_full(&message_manager.send_rb);
+
+    esp_err_t err = esp_now_send(message_manager_espnow_broadcast_mac, message_manager_esp_now_data_send_buffer, packet_size);
+    if (err != ESP_OK)
+    {
+        lwrb_reset(&message_manager.send_rb);
+    }
+
+    lwrb_reset(&message_manager.send_rb);
+
+    return MESSAGE_MANAGER_OK;
+}
+
+message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac)
+{
+    if (src_mac == NULL)
+        return MESSAGE_MANAGER_ERROR_SEND_SCAN_RESPONSE;
+
+    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, NULL, 0);
+    size_t packet_size = lwrb_get_full(&message_manager.send_rb);
+
+    esp_err_t err = esp_now_send(src_mac, message_manager_esp_now_data_send_buffer, packet_size);
+    if (err != ESP_OK)
+    {
+        lwrb_reset(&message_manager.send_rb);
+    }
+
+    lwrb_reset(&message_manager.send_rb);
+
+    return MESSAGE_MANAGER_OK;
+}
+
+message_manager_scan_result_t *message_manager_get_scan_result(uint64_t wait_ms)
+{
+    vTaskDelay(pdMS_TO_TICKS(wait_ms));
+
+    return &message_manager.scan_result;
 }
 
 bool message_manager_send_usb_line_code_change(uint32_t bit_rate, uint8_t stop_bits, uint8_t parity, uint8_t data_bits)
