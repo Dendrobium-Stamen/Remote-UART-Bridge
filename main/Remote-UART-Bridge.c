@@ -10,12 +10,23 @@
 #include "nvs_flash.h"
 
 #include "memory_display.h"
-#include "usb_bridge.h"
 #include "uart_bridge.h"
 #include "wifi_manager.h"
 #include "message_manager.h"
 #include "nvs_store.h"
 #include "web.h"
+
+#ifdef CONFIG_REMOTE_UART_ROLE_SERVER
+#include "usb_bridge.h"
+
+#endif
+
+#ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
+
+#define REMOATE_SERIAL_PORT_DEVICE_UART_TX_GPIO 4
+#define REMOATE_SERIAL_PORT_DEVICE_UART_RX_GPIO 5
+
+#endif
 
 static const char *TAG = "Remote UART Bridge Main";
 
@@ -48,11 +59,13 @@ void app_main(void)
 
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
     uart_bridge_config_t uart_bridge_config = {
-        .forward_callback = forward_callback,
+        .baud_rate = 115200,
+        .uart_tx_gpio_num = REMOATE_SERIAL_PORT_DEVICE_UART_TX_GPIO,
+        .uart_rx_gpio_num = REMOATE_SERIAL_PORT_DEVICE_UART_RX_GPIO,
+        .forward_callback = message_manager_send,
     };
 
-    uart_bridge_init(&uart_bridge_config);
-    uart_bridge_task_start();
+    uart_bridge_handle_t uart_bridge_handle = uart_bridge_handle_create(&uart_bridge_config);
 #endif
 
 #ifdef CONFIG_REMOTE_UART_ROLE_SERVER
@@ -68,6 +81,7 @@ void app_main(void)
 
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
     ESP_LOGI(TAG, "Remote UART Bridge Client");
+    uart_bridge_task_start(uart_bridge_handle);
 #endif
 
     while (1)

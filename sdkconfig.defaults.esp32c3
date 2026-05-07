@@ -1,0 +1,8 @@
+#
+# REMOTE UART BRIDGE
+#
+# default:
+# CONFIG_REMOTE_UART_ROLE_SERVER is not set
+# default:
+CONFIG_REMOTE_UART_ROLE_CLIENT=y
+# end of REMOTE UART BRIDGE
