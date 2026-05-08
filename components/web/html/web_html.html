@@ -335,51 +335,6 @@
             color: #82b1ff;
         }
 
-        /* ---- Send ---- */
-        .send-row {
-            display: flex;
-            gap: 0.6rem;
-            align-items: center;
-        }
-
-        .send-row select {
-            flex: 0 0 200px;
-        }
-
-        .send-row input {
-            flex: 1;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: 0.85rem;
-            padding: 0.6rem 0.8rem;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .send-row input:focus {
-            border-color: var(--accent);
-        }
-
-        .send-row select {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: 0.85rem;
-            padding: 0.6rem 0.8rem;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        select option {
-            background: var(--surface);
-            color: var(--text);
-        }
-
         /* ---- Toast ---- */
         .toast {
             position: fixed;
@@ -461,19 +416,6 @@
             .input-group {
                 flex-direction: column;
             }
-
-            .send-row {
-                flex-direction: column;
-            }
-
-            .send-row select {
-                flex: auto;
-                width: 100%;
-            }
-
-            .send-row input {
-                width: 100%;
-            }
         }
     </style>
 </head>
@@ -527,20 +469,6 @@
             <ul class="peer-list" id="peerList">
                 <li class="empty">No peers paired yet</li>
             </ul>
-        </div>
-
-        <!-- Send Test -->
-        <div class="card">
-            <div class="card-title">
-                <div class="dot"></div>Send Test
-            </div>
-            <div class="send-row">
-                <select id="sendTarget">
-                    <option value="">Select peer...</option>
-                </select>
-                <input type="text" id="sendData" placeholder="Message" spellcheck="false" autocomplete="off">
-                <button class="btn btn-accent" onclick="sendTest()">Send</button>
-            </div>
         </div>
 
     </div>
@@ -600,11 +528,9 @@
             try {
                 const peers = await api('GET', '/api/peers');
                 const list = document.getElementById('peerList');
-                const sel = document.getElementById('sendTarget');
 
                 if (peers.length === 0) {
                     list.innerHTML = '<li class="empty">No peers paired yet</li>';
-                    sel.innerHTML = '<option value="">Select peer...</option>';
                     knownPeers.clear();
                     return;
                 }
@@ -626,7 +552,6 @@
 
                 /* 渲染列表 */
                 list.innerHTML = '';
-                sel.innerHTML = '<option value="">Select peer...</option>';
 
                 peers.forEach(p => {
                     const li = document.createElement('li');
@@ -636,11 +561,6 @@
                         <span class="peer-mac">${p.mac}</span>
                         <button class="btn btn-danger" onclick="delPeer('${p.mac}')">Remove</button>`;
                     list.appendChild(li);
-
-                    const opt = document.createElement('option');
-                    opt.value = p.mac;
-                    opt.textContent = p.mac;
-                    sel.appendChild(opt);
                 });
             } catch (e) {
                 console.error(e);
@@ -734,23 +654,6 @@
                 loadPeers();
             } catch (e) {
                 showToast('Remove failed: ' + e.message, 'error');
-            }
-        }
-
-        /* ---- Send Test ---- */
-        async function sendTest() {
-            const mac = document.getElementById('sendTarget').value;
-            const data = document.getElementById('sendData').value;
-
-            if (!mac) { showToast('Select a peer first', 'error'); return; }
-            if (!data) { showToast('Enter a message', 'error'); return; }
-
-            try {
-                await api('POST', '/api/send', { mac, data });
-                showToast('Sent to ' + mac, 'success');
-                document.getElementById('sendData').value = '';
-            } catch (e) {
-                showToast('Send failed: ' + e.message, 'error');
             }
         }
 

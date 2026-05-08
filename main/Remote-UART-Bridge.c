@@ -47,6 +47,7 @@ void app_main(void)
     web_config_t web_config = {};
     web_init(&web_config);
 
+#ifdef CONFIG_REMOTE_UART_ROLE_SERVER
     message_manager_config_t message_manager_config = {
         .nvs_store = &nvs_store,
         .usb_to_uart_data_callback = NULL,
@@ -55,6 +56,7 @@ void app_main(void)
     };
 
     message_manager_init(&message_manager_config);
+#endif
 
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
     uart_bridge_config_t uart_bridge_config = {
@@ -65,6 +67,16 @@ void app_main(void)
     };
 
     uart_bridge_handle_t uart_bridge_handle = uart_bridge_handle_create(&uart_bridge_config);
+
+    message_manager_config_t message_manager_config = {
+        .nvs_store = &nvs_store,
+        .usb_to_uart_data_callback = uart_bridge_tx,
+        .line_coding_changed_baud_callback = uart_bridge_set_baud_rate,
+        .line_state_changed_callback = uart_bridge_set_line_state,
+    };
+
+    message_manager_init(&message_manager_config);
+
 #endif
 
 #ifdef CONFIG_REMOTE_UART_ROLE_SERVER
