@@ -43,7 +43,10 @@ typedef struct
 } message_manager_scan_result_t;
 
 message_manager_error_t message_manager_init(message_manager_config_t *config);
+
 size_t message_manager_send_data_usb_to_uart(uint8_t *data, size_t size);
+size_t message_manager_send_data_uart_to_usb(uint8_t *data, size_t size);
+
 message_manager_error_t message_manager_add_peer_mac(uint8_t *peer_mac);
 message_manager_error_t message_manager_delete_peer_mac(uint8_t *peer_mac);
 message_manager_error_t message_manager_get_peer_mac_count(uint8_t *count);

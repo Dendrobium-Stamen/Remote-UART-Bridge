@@ -63,7 +63,7 @@ void app_main(void)
         .baud_rate = 115200,
         .uart_tx_gpio_num = REMOATE_SERIAL_PORT_DEVICE_UART_TX_GPIO,
         .uart_rx_gpio_num = REMOATE_SERIAL_PORT_DEVICE_UART_RX_GPIO,
-        .forward_callback = message_manager_send,
+        .forward_callback = message_manager_send_data_uart_to_usb,
     };
 
     uart_bridge_handle_t uart_bridge_handle = uart_bridge_handle_create(&uart_bridge_config);
@@ -71,7 +71,7 @@ void app_main(void)
     message_manager_config_t message_manager_config = {
         .nvs_store = &nvs_store,
         .usb_to_uart_data_callback = uart_bridge_tx,
-        .uart_to_usb_data_callback = message_manager_send_data_uart_to_usb,
+        .uart_to_usb_data_callback = NULL,
         .line_coding_changed_baud_callback = uart_bridge_reset_baud_rate,
         .line_state_changed_callback = auto_download_set_gpio_level,
     };

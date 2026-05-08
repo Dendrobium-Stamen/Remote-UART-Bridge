@@ -61,7 +61,7 @@ void message_manager_esp_now_recv_callback(const esp_now_recv_info_t *esp_now_re
     uint8_t *des_addr = esp_now_recv_info->des_addr;
     int8_t rssi = (int8_t)esp_now_recv_info->rx_ctrl->rssi;
 
-    ESP_LOGI(TAG, "Received data from " MACSTR ", destination " MACSTR ", RSSI: %d, data length: %d", MAC2STR(src_addr), MAC2STR(des_addr), rssi, data_length);
+    ESP_LOGD(TAG, "Received data from " MACSTR ", destination " MACSTR ", RSSI: %d, data length: %d", MAC2STR(src_addr), MAC2STR(des_addr), rssi, data_length);
 
     lwrb_write(&message_manager.recv_rb, data, data_length);
 
