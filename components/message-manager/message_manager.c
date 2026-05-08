@@ -306,7 +306,6 @@ message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac, uin
         return MESSAGE_MANAGER_ERROR_SEND_SCAN_RESPONSE;
     }
 
-<<<<<<< HEAD
     ESP_LOG_BUFFER_HEX(TAG, data, data_length);
 
     lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, data, data_length);
@@ -320,9 +319,6 @@ message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac, uin
     ESP_ERROR_CHECK(esp_now_add_peer(&esp_now_peer_info));
 
     esp_err_t err = esp_now_send(src_mac, message_manager_esp_now_data_send_buffer, packet_size);
-=======
-    esp_err_t err = esp_now_send(src_mac, message_manager_esp_now_data_send_buffer, 0);
->>>>>>> ff48a90a34569297aa08f55129f1985e0c6fbcb2
     if (err != ESP_OK)
     {
         ESP_LOGI(TAG, "Failed to send scan response to peer " MACSTR ", error: %s", MAC2STR(src_mac), esp_err_to_name(err));
