@@ -9,6 +9,7 @@
 #include "nvs_store.h"
 
 typedef size_t message_manager_usb_to_uart_data_callback_t(uint8_t *data, size_t size);
+typedef size_t message_manager_uart_to_usb_data_callback_t(uint8_t *data, size_t size);
 typedef bool message_manager_line_coding_changed_baud_callback_t(int baud_rate);
 typedef bool message_manager_line_state_changed_callback_t(bool dtr, bool rts);
 
@@ -28,6 +29,7 @@ typedef struct
     nvs_store_t *nvs_store;
 
     message_manager_usb_to_uart_data_callback_t *usb_to_uart_data_callback;
+    message_manager_uart_to_usb_data_callback_t *uart_to_usb_data_callback;
     message_manager_line_coding_changed_baud_callback_t *line_coding_changed_baud_callback;
     message_manager_line_state_changed_callback_t *line_state_changed_callback;
 } message_manager_config_t;
@@ -41,7 +43,7 @@ typedef struct
 } message_manager_scan_result_t;
 
 message_manager_error_t message_manager_init(message_manager_config_t *config);
-size_t message_manager_send(uint8_t *data, size_t size);
+size_t message_manager_send_data_usb_to_uart(uint8_t *data, size_t size);
 message_manager_error_t message_manager_add_peer_mac(uint8_t *peer_mac);
 message_manager_error_t message_manager_delete_peer_mac(uint8_t *peer_mac);
 message_manager_error_t message_manager_get_peer_mac_count(uint8_t *count);

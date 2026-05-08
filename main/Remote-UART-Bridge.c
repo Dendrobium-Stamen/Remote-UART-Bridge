@@ -51,17 +51,6 @@ void app_main(void)
     web_config_t web_config = {};
     web_init(&web_config);
 
-#ifdef CONFIG_REMOTE_UART_ROLE_SERVER
-    message_manager_config_t message_manager_config = {
-        .nvs_store = &nvs_store,
-        .usb_to_uart_data_callback = NULL,
-        .line_coding_changed_baud_callback = NULL,
-        .line_state_changed_callback = NULL,
-    };
-
-    message_manager_init(&message_manager_config);
-#endif
-
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
     auto_download_config_t auto_download_config = {
         .dtr_gpio_num = AUTO_DOWNLOAD_DTS_GPIO_NUM,
@@ -82,6 +71,7 @@ void app_main(void)
     message_manager_config_t message_manager_config = {
         .nvs_store = &nvs_store,
         .usb_to_uart_data_callback = uart_bridge_tx,
+        .uart_to_usb_data_callback = message_manager_send_data_uart_to_usb,
         .line_coding_changed_baud_callback = uart_bridge_reset_baud_rate,
         .line_state_changed_callback = auto_download_set_gpio_level,
     };
@@ -92,12 +82,23 @@ void app_main(void)
 
 #ifdef CONFIG_REMOTE_UART_ROLE_SERVER
     usb_bridge_config_t usb_bridge_config = {
-        .forward_callback = message_manager_send,
+        .forward_callback = message_manager_send_data_usb_to_uart,
         .line_coding_changed_callback = message_manager_send_usb_line_code_change,
         .line_state_changed_callback = message_manager_send_usb_line_state_change,
     };
 
     usb_bridge_init(&usb_bridge_config);
+
+    message_manager_config_t message_manager_config = {
+        .nvs_store = &nvs_store,
+        .usb_to_uart_data_callback = NULL,
+        .uart_to_usb_data_callback = usb_bridge_tx,
+        .line_coding_changed_baud_callback = NULL,
+        .line_state_changed_callback = NULL,
+    };
+
+    message_manager_init(&message_manager_config);
+
     usb_bridge_task_start();
 #endif
 

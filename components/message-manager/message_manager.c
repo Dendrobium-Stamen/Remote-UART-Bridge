@@ -43,6 +43,7 @@ typedef struct
     message_manager_scan_result_t scan_result;
 
     message_manager_usb_to_uart_data_callback_t *usb_to_uart_data_callback;
+    message_manager_uart_to_usb_data_callback_t *uart_to_usb_data_callback;
     message_manager_line_coding_changed_baud_callback_t *line_coding_changed_baud_callback;
     message_manager_line_state_changed_callback_t *line_state_changed_callback;
 } message_manager_t;
@@ -109,6 +110,9 @@ void message_manager_esp_now_recv_callback(const esp_now_recv_info_t *esp_now_re
             break;
 
         case MESSAGE_MANAGER_COMMAND_UART_TO_USB_DATA:
+            if (message_manager.uart_to_usb_data_callback != NULL)
+                message_manager.uart_to_usb_data_callback(pkt_data, data_length);
+
             break;
 
         case MESSAGE_MANAGER_COMMAND_USB_LINE_CODING_CHANGED:
@@ -156,6 +160,7 @@ message_manager_error_t message_manager_init(message_manager_config_t *config)
 
     message_manager.nvs_store = config->nvs_store;
     message_manager.usb_to_uart_data_callback = config->usb_to_uart_data_callback;
+    message_manager.uart_to_usb_data_callback = config->uart_to_usb_data_callback;
     message_manager.line_coding_changed_baud_callback = config->line_coding_changed_baud_callback;
     message_manager.line_state_changed_callback = config->line_state_changed_callback;
 
@@ -244,7 +249,7 @@ message_manager_error_t message_manager_get_peer_mac(int index, uint8_t *mac)
     return MESSAGE_MANAGER_OK;
 }
 
-size_t message_manager_send(uint8_t *data, size_t size)
+size_t message_manager_send_data_usb_to_uart(uint8_t *data, size_t size)
 {
     if (data == NULL || size == 0)
         return 0;
@@ -259,6 +264,41 @@ size_t message_manager_send(uint8_t *data, size_t size)
         // ESP_LOGI(TAG, "Sending chunk, len: %d", chunk_size);
 
         lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_USB_TO_UART_DATA, data + send_data_length, chunk_size);
+        size_t packet_size = lwrb_get_full(&message_manager.send_rb);
+
+        for (int i = 0; i < message_manager.nvs_store->count; i++)
+        {
+            esp_err_t ret = esp_now_send(message_manager.nvs_store->macs[i], message_manager_esp_now_data_send_buffer, packet_size);
+            if (ret != ESP_OK)
+            {
+                // ESP_LOGE(TAG, "Failed to send data to peer " MACSTR ", error: %d", MAC2STR(message_manager.nvs_store->macs[i]), ret);
+                // ESP_LOGE(TAG, "Error sending the data: %s", esp_err_to_name(ret));
+                lwrb_reset(&message_manager.send_rb);
+            }
+        }
+
+        lwrb_reset(&message_manager.send_rb);
+        send_data_length += chunk_size;
+    }
+
+    return size;
+}
+
+size_t message_manager_send_data_uart_to_usb(uint8_t *data, size_t size)
+{
+    if (data == NULL || size == 0)
+        return 0;
+
+    size_t send_data_length = 0;
+    while (send_data_length < size)
+    {
+        size_t chunk_size = size - send_data_length;
+        if (chunk_size > LWPKT_CFG_MAX_DATA_LEN)
+            chunk_size = LWPKT_CFG_MAX_DATA_LEN;
+
+        // ESP_LOGI(TAG, "Sending chunk, len: %d", chunk_size);
+
+        lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_UART_TO_USB_DATA, data + send_data_length, chunk_size);
         size_t packet_size = lwrb_get_full(&message_manager.send_rb);
 
         for (int i = 0; i < message_manager.nvs_store->count; i++)
@@ -310,6 +350,17 @@ message_manager_error_t message_manager_send_scan_response(uint8_t *src_mac, uin
 
     lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, data, data_length);
     size_t packet_size = lwrb_get_full(&message_manager.send_rb);
+
+    bool is_peered = false;
+    for (int i = 0; i < message_manager.nvs_store->count; i++)
+        if (memcmp(src_mac, message_manager.nvs_store->macs[i], ESP_NOW_ETH_ALEN) == 0)
+            is_peered = true;
+
+    if (is_peered == true)
+    {
+        esp_now_send(src_mac, message_manager_esp_now_data_send_buffer, packet_size);
+        return MESSAGE_MANAGER_OK;
+    }
 
     esp_now_peer_info_t esp_now_peer_info = {};
     memcpy(esp_now_peer_info.peer_addr, src_mac, ESP_NOW_ETH_ALEN);
