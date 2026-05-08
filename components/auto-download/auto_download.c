@@ -45,12 +45,12 @@ auto_download_error_t auto_download_init(auto_download_config_t *config)
     return AUTO_DOWNLOAD_OK;
 }
 
-auto_download_error_t auto_download_set_gpio_level(bool dtr_level, bool rts_level)
+bool auto_download_set_gpio_level(bool dtr_level, bool rts_level)
 {
     gpio_set_level(auto_download.dtr_gpio_num, dtr_level);
     gpio_set_level(auto_download.rts_gpio_num, rts_level);
 
-    return AUTO_DOWNLOAD_OK;
+    return true;
 }
 
 auto_download_error_t auto_download_deinit()

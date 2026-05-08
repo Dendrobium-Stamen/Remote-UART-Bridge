@@ -18,7 +18,7 @@ typedef enum
 } auto_download_error_t;
 
 auto_download_error_t auto_download_init(auto_download_config_t *config);
-auto_download_error_t auto_download_set_gpio_level(bool dtr_level, bool rts_level);
+bool auto_download_set_gpio_level(bool dtr_level, bool rts_level);
 auto_download_error_t auto_download_deinit();
 
 #endif

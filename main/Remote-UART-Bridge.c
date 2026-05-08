@@ -15,12 +15,16 @@
 #include "message_manager.h"
 #include "nvs_store.h"
 #include "web.h"
+#include "auto_download.h"
 
 #ifdef CONFIG_REMOTE_UART_ROLE_SERVER
 #include "usb_bridge.h"
 #endif
 
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
+
+#define AUTO_DOWNLOAD_DTS_GPIO_NUM 0
+#define AUTO_DOWNLOAD_RTS_GPIO_NUM 1
 
 #define REMOATE_SERIAL_PORT_DEVICE_UART_TX_GPIO 4
 #define REMOATE_SERIAL_PORT_DEVICE_UART_RX_GPIO 5
@@ -59,6 +63,13 @@ void app_main(void)
 #endif
 
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
+    auto_download_config_t auto_download_config = {
+        .dtr_gpio_num = AUTO_DOWNLOAD_DTS_GPIO_NUM,
+        .rts_gpio_num = AUTO_DOWNLOAD_RTS_GPIO_NUM,
+    };
+
+    auto_download_init(&auto_download_config);
+
     uart_bridge_config_t uart_bridge_config = {
         .baud_rate = 115200,
         .uart_tx_gpio_num = REMOATE_SERIAL_PORT_DEVICE_UART_TX_GPIO,
@@ -71,8 +82,8 @@ void app_main(void)
     message_manager_config_t message_manager_config = {
         .nvs_store = &nvs_store,
         .usb_to_uart_data_callback = uart_bridge_tx,
-        .line_coding_changed_baud_callback = uart_bridge_set_baud_rate,
-        .line_state_changed_callback = uart_bridge_set_line_state,
+        .line_coding_changed_baud_callback = uart_bridge_reset_baud_rate,
+        .line_state_changed_callback = auto_download_set_gpio_level,
     };
 
     message_manager_init(&message_manager_config);
