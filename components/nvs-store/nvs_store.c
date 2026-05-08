@@ -66,10 +66,7 @@ nvs_store_error_t nvs_store_add(nvs_store_t *nvs_store, uint8_t *peer_mac)
 nvs_store_error_t nvs_store_delete(nvs_store_t *nvs_store, uint8_t *peer_mac)
 {
     if (nvs_store == NULL || peer_mac == NULL)
-        return NVS_STORE_ERROR_ADD;
-
-    if (nvs_store->count >= NVS_STORE_MAX_PEERS)
-        return NVS_STORE_ERROR_ADD;
+        return NVS_STORE_ERROR_DELETE;
 
     for (int i = 0; i < nvs_store->count; i++)
     {

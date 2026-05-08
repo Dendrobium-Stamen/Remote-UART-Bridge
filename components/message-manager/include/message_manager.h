@@ -17,7 +17,7 @@ typedef enum
     MESSAGE_MANAGER_OK,
     MESSAGE_MANAGER_ERROR_INIT,
     MESSAGE_MANAGER_ERROR_ADD_PEER,
-    MESSAGE_MANAGER_ERROR_REMOVE_PEER,
+    MESSAGE_MANAGER_ERROR_DELETE_PEER,
     MESSAGE_MANAGER_ERROR_GET_PEER_MAC_COUNT,
     MESSAGE_MANAGER_ERROR_GET_PEER_MAC_LIST,
     MESSAGE_MANAGER_ERROR_SEND_SCAN_RESPONSE,
@@ -43,7 +43,7 @@ typedef struct
 message_manager_error_t message_manager_init(message_manager_config_t *config);
 size_t message_manager_send(uint8_t *data, size_t size);
 message_manager_error_t message_manager_add_peer_mac(uint8_t *peer_mac);
-message_manager_error_t message_manager_remove_peer_mac(uint8_t *peer_mac);
+message_manager_error_t message_manager_delete_peer_mac(uint8_t *peer_mac);
 message_manager_error_t message_manager_get_peer_mac_count(uint8_t *count);
 message_manager_error_t message_manager_get_peer_mac(int index, uint8_t *mac);
 message_manager_error_t message_manager_send_scan();

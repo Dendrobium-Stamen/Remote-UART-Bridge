@@ -24,7 +24,7 @@ web_error_t web_init(web_config_t *config)
         {.uri = "/api/status", .method = HTTP_GET, .handler = api_status_handler},
         {.uri = "/api/peers", .method = HTTP_GET, .handler = api_peers_handler},
         {.uri = "/api/peer/add", .method = HTTP_POST, .handler = api_peer_add_handler},
-        // {.uri = "/api/peer/del", .method = HTTP_POST, .handler = api_peer_del_handler},
+        {.uri = "/api/peer/del", .method = HTTP_POST, .handler = api_peer_del_handler},
         {.uri = "/api/scan", .method = HTTP_POST, .handler = api_scan_handler},
         // {.uri = "/api/send", .method = HTTP_POST, .handler = api_send_handler},
     };

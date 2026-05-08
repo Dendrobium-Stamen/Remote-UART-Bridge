@@ -210,13 +210,13 @@ message_manager_error_t message_manager_add_peer_mac(uint8_t *peer_mac)
     return MESSAGE_MANAGER_OK;
 }
 
-message_manager_error_t message_manager_remove_peer_mac(uint8_t *peer_mac)
+message_manager_error_t message_manager_delete_peer_mac(uint8_t *peer_mac)
 {
     if (nvs_store_delete(message_manager.nvs_store, peer_mac) != NVS_STORE_OK)
-        return MESSAGE_MANAGER_ERROR_REMOVE_PEER;
+        return MESSAGE_MANAGER_ERROR_DELETE_PEER;
 
     if (nvs_store_save(message_manager.nvs_store) != NVS_STORE_OK)
-        return MESSAGE_MANAGER_ERROR_REMOVE_PEER;
+        return MESSAGE_MANAGER_ERROR_DELETE_PEER;
 
     esp_now_del_peer(peer_mac);
 
