@@ -20,12 +20,13 @@ web_error_t web_init(web_config_t *config)
     ESP_ERROR_CHECK(httpd_start(&web.server, &httpd_config));
 
     const httpd_uri_t httpd_uris[] = {
-        {.uri = "/", .method = HTTP_GET, .handler = page_handler},
-        {.uri = "/api/status", .method = HTTP_GET, .handler = api_status_handler},
-        {.uri = "/api/peers", .method = HTTP_GET, .handler = api_peers_handler},
-        {.uri = "/api/peer/add", .method = HTTP_POST, .handler = api_peer_add_handler},
-        {.uri = "/api/peer/del", .method = HTTP_POST, .handler = api_peer_del_handler},
-        {.uri = "/api/scan", .method = HTTP_POST, .handler = api_scan_handler},
+        {.uri = "/", .method = HTTP_GET, .handler = espnow_page_handler},
+        {.uri = "/monitor", .method = HTTP_GET, .handler = monitor_page_handler},
+        // {.uri = "/api/status", .method = HTTP_GET, .handler = api_status_handler},
+        // {.uri = "/api/peers", .method = HTTP_GET, .handler = api_peers_handler},
+        // {.uri = "/api/peer/add", .method = HTTP_POST, .handler = api_peer_add_handler},
+        // {.uri = "/api/peer/del", .method = HTTP_POST, .handler = api_peer_del_handler},
+        // {.uri = "/api/scan", .method = HTTP_POST, .handler = api_scan_handler},
     };
 
     for (int i = 0; i < sizeof(httpd_uris) / sizeof(httpd_uris[0]); i++)

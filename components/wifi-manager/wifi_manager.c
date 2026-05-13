@@ -23,8 +23,21 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
     }
 }
 
-wifi_manager_error_t wifi_manager_init()
+wifi_manager_error_t wifi_manager_init(wifi_manager_config_t *config)
 {
+    char ssid[32];
+    if (config == NULL)
+    {
+        uint8_t mac[6];
+        esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+        snprintf(ssid, sizeof(ssid), MACSTR, MAC2STR(mac));
+        ESP_LOGI(TAG, "SSID: %s", ssid);
+
+        ESP_LOGW(TAG, "WiFi ssid use default value");
+    }
+    else
+        memcpy(ssid, config->ssid, sizeof(ssid));
+
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_ap();
@@ -32,13 +45,6 @@ wifi_manager_error_t wifi_manager_init()
     wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
-
-    uint8_t mac[6];
-    ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac));
-
-    char ssid[18];
-    snprintf(ssid, sizeof(ssid), MACSTR, MAC2STR(mac));
-    ESP_LOGI(TAG, "SSID: %s", ssid);
 
     wifi_config_t wifi_config = {0};
     wifi_config.ap.channel = 1;

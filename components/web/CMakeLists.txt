@@ -3,5 +3,6 @@ idf_component_register(SRC_DIRS "."
     INCLUDE_DIRS "."
                  "./include"
                  "./handler"
-    EMBED_FILES "./html/web_html.html"
+    EMBED_FILES "./html/espnow_html.html"
+                "./html/monitor_html.html"
     REQUIRES esp_http_server message-manager espressif__cjson)

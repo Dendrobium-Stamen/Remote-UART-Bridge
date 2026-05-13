@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>System Monitor</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:monospace;background:#f5f0fa;color:#4a4060;min-height:100vh}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #e0d8f0}
+.nav-title{font-size:18px;font-weight:bold;color:#7c6baa}
+.nav a{color:#b8aed0;text-decoration:none;font-size:13px}
+.nav a.active{color:#7c6baa;border-bottom:2px solid #c4b5e0;padding-bottom:2px}
+.container{max-width:600px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid #e8e0f5;border-radius:10px;padding:14px;margin-bottom:12px}
+.card-label{color:#9a8abf;font-size:11px;text-transform:uppercase;margin-bottom:6px}
+.card-value{font-size:28px;color:#7c6baa;font-weight:bold}
+.card-value small{font-size:14px;color:#b8aed0}
+.bar{background:#f0ecf8;border-radius:4px;height:5px;margin-top:8px}
+.bar-fill{background:linear-gradient(90deg,#c4b5e0,#9a8abf);height:100%;border-radius:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.upload-area{border:2px dashed #d8d0e8;border-radius:10px;padding:18px;text-align:center;background:#fcfafd;cursor:pointer;margin-bottom:10px}
+.upload-area svg{margin-bottom:6px}
+.upload-area p{color:#9a8abf;font-size:12px}
+.progress-bar{background:#f0ecf8;border-radius:4px;height:6px;margin-bottom:8px}
+.progress-fill{background:linear-gradient(90deg,#c4b5e0,#9a8abf);height:100%;border-radius:4px;transition:width .3s}
+.upload-footer{display:flex;justify-content:space-between;align-items:center}
+.upload-footer span{color:#c4b5e0;font-size:11px}
+.btn{background:#9a8abf;color:#fff;border:none;border-radius:8px;padding:6px 18px;cursor:pointer;font-size:12px;font-family:monospace}
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="nav-title">&#10047; System Monitor</div>
+  <div>
+    <a href="/monitor" class="active">&#10047; Monitor</a>
+    <a href="/espnow" style="margin-left:16px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      ESP-NOW
+    </a>
+  </div>
+</div>
+<div class="container">
+  <div class="grid">
+    <div class="card">
+      <div class="card-label">CPU Usage</div>
+      <div class="card-value" id="cpu">--<small>%</small></div>
+      <div class="bar"><div class="bar-fill" id="cpu-bar" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Free Heap</div>
+      <div class="card-value" id="heap">--<small> KB</small></div>
+      <div class="bar"><div class="bar-fill" id="heap-bar" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Uptime</div>
+      <div class="card-value" id="uptime" style="font-size:24px">--:--:--</div>
+    </div>
+    <div class="card">
+      <div class="card-label">SDK Version</div>
+      <div class="card-value" id="sdk" style="font-size:14px">--</div>
+      <div style="color:#b8aed0;font-size:11px;margin-top:4px" id="chip">--</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-label">Firmware Upgrade</div>
+    <div class="upload-area" id="drop-zone">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9a8abf" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+      <p>Click to select .bin file</p>
+    </div>
+    <input type="file" id="file-input" accept=".bin" style="display:none">
+    <div class="progress-bar"><div class="progress-fill" id="ota-progress" style="width:0%"></div></div>
+    <div class="upload-footer">
+      <span id="file-name">No file selected</span>
+      <button class="btn" id="upgrade-btn">Upgrade</button>
+    </div>
+  </div>
+</div>
+<script>
+fetch('/api/system/status').then(r=>r.json()).then(d=>{
+  if(d.cpu!==undefined){document.getElementById('cpu').innerHTML=d.cpu+'<small>%</small>';document.getElementById('cpu-bar').style.width=d.cpu+'%'}
+  if(d.heap!==undefined){document.getElementById('heap').innerHTML=d.heap+'<small> KB</small>';document.getElementById('heap-bar').style.width=Math.min(d.heap/300*100,100)+'%'}
+  if(d.uptime)document.getElementById('uptime').textContent=d.uptime;
+  if(d.sdk)document.getElementById('sdk').textContent=d.sdk;
+  if(d.chip)document.getElementById('chip').textContent=d.chip;
+}).catch(()=>{});
+var dropZone=document.getElementById('drop-zone');
+var fileInput=document.getElementById('file-input');
+var upgradeBtn=document.getElementById('upgrade-btn');
+dropZone.onclick=()=>fileInput.click();
+dropZone.ondragover=e=>{e.preventDefault();dropZone.style.borderColor='#9a8abf'};
+dropZone.ondragleave=()=>{dropZone.style.borderColor='#d8d0e8'};
+dropZone.ondrop=e=>{e.preventDefault();dropZone.style.borderColor='#d8d0e8';if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0])};
+fileInput.onchange=()=>{if(fileInput.files.length)handleFile(fileInput.files[0])};
+function handleFile(f){document.getElementById('file-name').textContent=f.name;upgradeBtn.dataset.file=f}
+upgradeBtn.onclick=()=>{var f=upgradeBtn.dataset.file;if(!f){alert('No file selected');return}var fd=new FormData();fd.append('file',f);var xhr=new XMLHttpRequest();xhr.open('POST','/api/ota/upload');xhr.upload.onprogress=e=>{if(e.lengthComputable)document.getElementById('ota-progress').style.width=(e.loaded/e.total*100)+'%'};xhr.onload=()=>{if(xhr.status===200)alert('Upgrade started');else alert('Upgrade failed')};xhr.send(fd)};
+</script>
+</body>
+</html>

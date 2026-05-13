@@ -7,6 +7,11 @@ typedef enum
     WIFI_MANAGER_ERROR,
 } wifi_manager_error_t;
 
-wifi_manager_error_t wifi_manager_init(void);
+typedef struct
+{
+    char ssid[32];
+} wifi_manager_config_t;
+
+wifi_manager_error_t wifi_manager_init(wifi_manager_config_t *config);
 
 #endif
