@@ -59,7 +59,7 @@ espnow_manager_error_t espnow_manager_get_label(char *label, uint8_t label_lengt
 espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label);
 espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac);
 espnow_manager_error_t espnow_manager_get_peer_mac_count(uint8_t *count, size_t *max_label_length);
-espnow_manager_error_t espnow_manager_get_peer_mac(uint8_t index, uint8_t *mac, char *label);
+espnow_manager_error_t espnow_manager_get_peer_mac(uint8_t index, uint8_t *mac, char *label, bool *is_enable);
 
 espnow_manager_error_t espnow_manager_temporary_add_peer_mac(uint8_t *mac);
 espnow_manager_error_t espnow_manager_temporary_del_peer_mac(uint8_t *mac);

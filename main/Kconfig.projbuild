@@ -2,8 +2,8 @@ menu "REMOTE UART BRIDGE"
 
     choice REMOTE_UART_ROLE
         prompt "Device role"
-        default REMOTE_UART_ROLE_SERVER_CHOICE if !IDF_TARGET_ESP32C3
-        default REMOTE_UART_ROLE_CLIENT_CHOICE if IDF_TARGET_ESP32C3
+        default REMOTE_UART_ROLE_SERVER if !IDF_TARGET_ESP32C3
+        default REMOTE_UART_ROLE_CLIENT if IDF_TARGET_ESP32C3
 
     config REMOTE_UART_ROLE_SERVER
         bool "Server (listen for connections)"

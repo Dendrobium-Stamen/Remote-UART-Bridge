@@ -249,7 +249,7 @@ espnow_manager_error_t espnow_manager_temporary_del_peer_mac(uint8_t *mac)
 
 espnow_manager_error_t espnow_manager_get_peer_mac_count(uint8_t *count, size_t *max_label_length)
 {
-    if (count == NULL)
+    if (count == NULL || max_label_length == NULL)
         return ESPNOW_MANAGER_ERROR_PEER_COUNT_FIND;
 
     *count = espnow_manager.devices->current_device_count;
@@ -258,9 +258,9 @@ espnow_manager_error_t espnow_manager_get_peer_mac_count(uint8_t *count, size_t 
     return ESPNOW_MANAGER_OK;
 }
 
-espnow_manager_error_t espnow_manager_get_peer_mac(uint8_t index, uint8_t *mac, char *label)
+espnow_manager_error_t espnow_manager_get_peer_mac(uint8_t index, uint8_t *mac, char *label, bool *is_enable)
 {
-    if (mac == NULL || label == NULL)
+    if (mac == NULL || label == NULL || is_enable == NULL)
         return ESPNOW_MANAGER_ERROR_PEER_GET;
 
     if (index >= espnow_manager.devices->current_device_count)
@@ -268,6 +268,7 @@ espnow_manager_error_t espnow_manager_get_peer_mac(uint8_t index, uint8_t *mac, 
 
     memcpy(mac, espnow_manager.devices->device[index].mac, ESPNOW_MANAGER_MAC_LEN);
     strncpy(label, espnow_manager.devices->device[index].label, strlen(espnow_manager.devices->device[index].label) + 1);
+    *is_enable = espnow_manager.devices->device[index].is_enable;
 
     return ESPNOW_MANAGER_OK;
 }
