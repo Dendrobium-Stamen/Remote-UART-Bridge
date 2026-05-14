@@ -24,5 +24,5 @@ espnow_manager_error_t espnow_manager_tools_add_peer(uint8_t *mac)
         return ESPNOW_MANAGER_ERROR_PEER_ADD;
     }
 
-    return ESPNOW_MANAGER_ERROR_LOCK;
+    return ESPNOW_MANAGER_OK;
 }

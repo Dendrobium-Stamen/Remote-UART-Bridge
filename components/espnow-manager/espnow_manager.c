@@ -81,7 +81,13 @@ espnow_manager_error_t espnow_manager_init(espnow_manager_config_t *config)
     if (strlen(config->label) > ESPNOW_MANAGER_MAX_LABEL_LENGTH)
     {
         ESP_LOGW(TAG, "Label length is too long, max length is %d, use default label.", ESPNOW_MANAGER_MAX_LABEL_LENGTH);
-        strcpy(espnow_manager.label, config->label);
+        uint8_t mac[6];
+        esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+        snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
+    }
+    else
+    {
+        strncpy(espnow_manager.label, config->label, strlen(config->label));
     }
 
     espnow_manager.receive_message_callback = config->receive_message_callback;
@@ -90,10 +96,10 @@ espnow_manager_error_t espnow_manager_init(espnow_manager_config_t *config)
     espnow_manager_devices_t *espnow_manager_devices = (espnow_manager_devices_t *)malloc(espnow_manager_devices_size);
     memset(espnow_manager_devices, 0, espnow_manager_devices_size);
 
-    if (nvs_manager_get_blob(ESPNOW_MANAGER_NVS_KEY, &espnow_manager_devices, &espnow_manager_devices_size) != NVS_MANAGER_OK)
+    if (nvs_manager_get_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager_devices, &espnow_manager_devices_size) != NVS_MANAGER_OK)
     {
         nvs_manager_erase_all();
-        nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, &espnow_manager_devices, espnow_manager_devices_size);
+        nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager_devices, espnow_manager_devices_size);
         ESP_LOGW(TAG, "Failed to get espnow manager from nvs, erase all nvs, load default espnow manager.");
     }
 
@@ -205,7 +211,7 @@ espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label)
     espnow_manager.devices->current_device_count++;
 
     size_t espnow_manager_devices_size = sizeof(espnow_manager_devices_t);
-    if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, &espnow_manager.devices, espnow_manager_devices_size))
+    if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager.devices, espnow_manager_devices_size))
         return ESPNOW_MANAGER_ERROR_PEER_ADD;
 
     return espnow_manager_tools_add_peer(mac);
@@ -228,10 +234,10 @@ espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac)
     }
 
     size_t espnow_manager_devices_size = sizeof(espnow_manager_devices_t);
-    if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, &espnow_manager.devices, espnow_manager_devices_size))
+    if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager.devices, espnow_manager_devices_size))
         return ESPNOW_MANAGER_ERROR_PEER_DEL;
 
-    return espnow_manager_tools_add_peer(mac);
+    return esp_now_del_peer(mac);
 }
 
 espnow_manager_error_t espnow_manager_temporary_add_peer_mac(uint8_t *mac)
