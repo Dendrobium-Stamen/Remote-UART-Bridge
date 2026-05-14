@@ -109,9 +109,18 @@ input[type=text]::placeholder{color:var(--text-muted)}
 .device-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:rgba(255,255,255,.5);border:1px solid var(--border-light);border-radius:10px;margin-bottom:16px;font-size:11px;animation:fadeUp .4s ease-out backwards}
 .device-bar .mac{color:var(--primary);font-weight:500}
 .device-bar .label-tag{background:var(--border-light);padding:2px 8px;border-radius:4px;color:var(--primary-light)}
+
+/* Toast */
+.toast-wrap{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{padding:8px 18px;border-radius:8px;font-size:12px;font-family:inherit;animation:toastIn .3s ease-out,toastOut .3s ease-in forwards;animation-delay:0s,2.5s;pointer-events:auto;box-shadow:var(--shadow-md);max-width:360px;text-align:center}
+.toast-ok{background:var(--success);color:#fff}
+.toast-err{background:var(--danger);color:#fff}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0}}
 </style>
 </head>
 <body>
+<div class="toast-wrap" id="toast-wrap"></div>
 <div class="nav">
   <div class="nav-title">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
@@ -184,7 +193,15 @@ input[type=text]::placeholder{color:var(--text-muted)}
 </div>
 
 <script>
-function macStr(buf){return buf.map(function(b){return('0'+b.toString(16).toUpperCase()).slice(-2)}).join(':')}
+/* ---- Toast ---- */
+function toast(msg, ok){
+  var wrap=document.getElementById('toast-wrap');
+  var el=document.createElement('div');
+  el.className='toast '+(ok?'toast-ok':'toast-err');
+  el.textContent=msg;
+  wrap.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el)},3000);
+}
 
 /* ---- Load device info ---- */
 function loadDeviceInfo(){
@@ -216,9 +233,14 @@ function loadPeers(){
 /* ---- Toggle peer enable/disable ---- */
 function togglePeer(mac,enable){
   var url=enable?'/api/espnow/peer/enable':'/api/espnow/peer/disable';
+  var action=enable?'Enable':'Disable';
   fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac:mac})})
-  .then(function(){loadPeers()})
-  .catch(function(){});
+  .then(function(r){return r.json()})
+  .then(function(d){
+    if(d.ok){toast(action+'d '+mac,true);loadPeers()}
+    else toast(action+' failed: '+(d.error||'unknown'),false);
+  })
+  .catch(function(){toast(action+' request error',false)});
 }
 
 /* ---- Scan ---- */
@@ -228,9 +250,10 @@ function doScan(){
   btn.disabled=true;btn.textContent='Scanning...';btn.classList.add('scanning');
   el.innerHTML='<span class="scanning">Scanning for ESP-NOW devices...</span>';
 
-  fetch('/api/espnow/scan',{method:'POST'}).then(r=>r.json()).then(function(d){
+  fetch('/api/espnow/scan',{method:'POST'}).then(function(r){return r.json()}).then(function(d){
     btn.disabled=false;btn.textContent='Scan';btn.classList.remove('scanning');
     if(d.devices&&d.devices.length){
+      toast('Scan found '+d.devices.length+' device'+(d.devices.length>1?'s':''),true);
       el.innerHTML=d.devices.map(function(d,i){
         return '<div class="scan-item" style="--i:'+i+'">'
           +'<span class="mac">'+d.mac+'</span>'
@@ -240,9 +263,13 @@ function doScan(){
           +'</div>';
       }).join('');
     }else{
+      toast('Scan complete, no devices found',true);
       el.textContent='No devices found';
     }
-  }).catch(function(){btn.disabled=false;btn.textContent='Scan';btn.classList.remove('scanning');el.textContent='Scan failed'});
+  }).catch(function(e){
+    btn.disabled=false;btn.textContent='Scan';btn.classList.remove('scanning');
+    el.textContent='Scan failed';toast('Scan request error',false);
+  });
 }
 
 function addFromScan(mac,label){
@@ -261,15 +288,23 @@ function doAddPeer(){
   var label=document.getElementById('add-label').value.trim();
   if(!mac){document.getElementById('add-mac').style.borderColor='var(--danger)';return}
   fetch('/api/espnow/peer/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac:mac,label:label||mac})})
-  .then(function(){hideAddDialog();loadPeers()})
-  .catch(function(){});
+  .then(function(r){return r.json()})
+  .then(function(d){
+    if(d.ok){toast('Peer added: '+mac,true);hideAddDialog();loadPeers()}
+    else toast('Add failed: '+(d.error||'unknown'),false);
+  })
+  .catch(function(){toast('Add request error',false)});
 }
 
 /* ---- Remove peer ---- */
 function doRemove(mac){
   fetch('/api/espnow/peer/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac:mac})})
-  .then(function(){loadPeers()})
-  .catch(function(){});
+  .then(function(r){return r.json()})
+  .then(function(d){
+    if(d.ok){toast('Peer removed: '+mac,true);loadPeers()}
+    else toast('Remove failed: '+(d.error||'unknown'),false);
+  })
+  .catch(function(){toast('Remove request error',false)});
 }
 
 /* ---- ESP-NOW test send ---- */
@@ -287,7 +322,8 @@ function doTestSend(){
     entry.className='log-entry '+(d.ok?'log-ok':'log-fail');
     entry.textContent='['+ts+'] '+(d.ok?'OK':'FAIL')+' -> '+mac+': '+data;
     log.appendChild(entry);log.scrollTop=log.scrollHeight;
-  }).catch(function(){});
+    toast(d.ok?'Sent to '+mac:'Send failed: '+(d.error||'unknown'),d.ok);
+  }).catch(function(){toast('Send request error',false)});
 }
 
 loadPeers();
