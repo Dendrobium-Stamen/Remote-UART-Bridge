@@ -13,7 +13,7 @@ static const char *TAG = "Web peer add handler";
 
 typedef struct
 {
-    char mac[ESPNOW_MANAGER_MAC_LEN];
+    char mac[WEB_TOOLS_MAC_TO_STR_LENGTH];
     char label[ESPNOW_MANAGER_MAX_LABEL_LENGTH];
 } peer_add_req_t;
 
@@ -36,7 +36,7 @@ static bool parse_peer_add_req(httpd_req_t *req, peer_add_req_t *out)
         return false;
     }
 
-    strncpy(out->mac, j_mac->valuestring, ESPNOW_MANAGER_MAC_LEN - 1);
+    strncpy(out->mac, j_mac->valuestring, WEB_TOOLS_MAC_TO_STR_LENGTH - 1);
     if (cJSON_IsString(j_label))
         strncpy(out->label, j_label->valuestring, ESPNOW_MANAGER_MAX_LABEL_LENGTH - 1);
     else

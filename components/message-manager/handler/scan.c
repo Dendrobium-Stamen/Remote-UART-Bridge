@@ -17,13 +17,12 @@ message_manager_error_t message_manager_scan_handler(uint8_t *src_mac, uint8_t *
         ESP_LOGI(TAG, "Failed to send scan response, src_mac is NULL");
         return MESSAGE_MANAGER_ERROR_SCAN_RESPONSE;
     }
-    message_manager_scan_message_t message_manager_scan_message;
-    message_manager_scan_message.timestamp = esp_timer_get_time();
-    espnow_manager_get_label(message_manager_scan_message.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
 
-    message_manager.scan_result.timestamp = message_manager_scan_message.timestamp;
+    message_manager_scan_message_t scan_message;
+    memcpy(&scan_message, data, data_length);
+    espnow_manager_get_label(scan_message.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
 
-    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, &message_manager_scan_message, sizeof(message_manager_scan_message_t));
+    lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_SCAN_RESPONSE, &scan_message, sizeof(message_manager_scan_message_t));
     size_t packet_size = lwrb_get_full(&message_manager.send_rb);
     if (packet_size <= 0)
     {
@@ -33,7 +32,6 @@ message_manager_error_t message_manager_scan_handler(uint8_t *src_mac, uint8_t *
 
     uint8_t *packet_data = malloc(packet_size);
     lwrb_read(&message_manager.send_rb, packet_data, packet_size);
-    lwrb_reset(&message_manager.send_rb);
 
     espnow_manager_temporary_add_peer_mac(src_mac);
 
