@@ -191,12 +191,7 @@ espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label)
 
     espnow_manager_error_t error = espnow_manager_tools_add_peer(mac);
     if (error != ESPNOW_MANAGER_OK)
-    {
-        if (error == ESPNOW_MANAGER_ERROR_PEER_EXISTS)
-            return ESPNOW_MANAGER_OK;
-
         return error;
-    }
 
     memcpy(espnow_manager.devices->device[espnow_manager.devices->current_device_count].mac, mac, ESPNOW_MANAGER_MAC_LEN);
     if (label != NULL && strlen(label) > 0 && strlen(label) < ESPNOW_MANAGER_MAX_LABEL_LENGTH)

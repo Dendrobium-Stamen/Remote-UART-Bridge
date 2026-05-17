@@ -52,8 +52,9 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 .btn-group{display:flex;gap:10px;margin-bottom:18px}
 
 /* Peer table */
-table{width:100%;border-collapse:collapse;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
 th{color:var(--text-muted);border-bottom:1px solid var(--border-light);text-align:left;padding:6px 10px;font-weight:500;font-size:11px}
+th:last-child,td:last-child{text-align:right}
 td{padding:8px 10px;border-bottom:1px solid var(--border-light);transition:var(--transition)}
 tr:hover td{background:rgba(124,107,170,.03)}
 td.mac{color:var(--primary);font-weight:500;font-size:11px;font-family:inherit}
@@ -141,6 +142,7 @@ input[type=text]::placeholder{color:var(--text-muted)}
   <div class="card">
     <div class="card-label">Scanned Devices</div>
     <table>
+      <colgroup><col style="width:40%"><col style="width:25%"><col style="width:17%"><col style="width:18%"></colgroup>
       <thead><tr><th>MAC</th><th>Label</th><th>RSSI</th><th></th></tr></thead>
       <tbody id="scan-list"></tbody>
     </table>
@@ -151,6 +153,7 @@ input[type=text]::placeholder{color:var(--text-muted)}
   <div class="card">
     <div class="card-label">Peer List</div>
     <table>
+      <colgroup><col style="width:40%"><col style="width:25%"><col style="width:17%"><col style="width:18%"></colgroup>
       <thead><tr><th>MAC</th><th>Label</th><th>Enable</th><th></th></tr></thead>
       <tbody id="peer-list"></tbody>
     </table>
@@ -194,14 +197,15 @@ function loadDeviceInfo(){
 }
 loadDeviceInfo();
 
+var _prevPeerHtml='';
 /* ---- Load peer list ---- */
 function loadPeers(){
   fetch('/api/espnow/peers').then(r=>r.json()).then(function(d){
     var tbody=document.getElementById('peer-list');
     var empty=document.getElementById('peer-empty');
-    if(!d.peers||!d.peers.length){tbody.innerHTML='';empty.style.display='block';return}
+    if(!d.peers||!d.peers.length){tbody.innerHTML='';empty.style.display='block';_prevPeerHtml='';return}
     empty.style.display='none';
-    tbody.innerHTML=d.peers.map(function(p,i){
+    var html=d.peers.map(function(p,i){
       return '<tr style="animation:fadeUp .3s ease-out '+i*0.04+'s backwards">'
         +'<td class="mac">'+p.mac+'</td>'
         +'<td><span class="tag">'+p.label+'</span></td>'
@@ -209,6 +213,9 @@ function loadPeers(){
         +'<td><button class="btn-danger" onclick="doRemove(\''+p.mac+'\')">&#10005;</button></td>'
         +'</tr>';
     }).join('');
+    if(html===_prevPeerHtml)return;
+    _prevPeerHtml=html;
+    tbody.innerHTML=html;
   }).catch(function(){});
 }
 
