@@ -9,6 +9,7 @@
 #include "esp_err.h"
 
 #include "nvs_manager.h"
+#include "espstate_monitor.h"
 #include "memory_display.h"
 #include "espnow_manager.h"
 #include "uart_bridge.h"
@@ -42,6 +43,8 @@ static const char *TAG = "Remote UART Bridge Main";
 void app_main(void)
 {
     nvs_manager_init(REMOTE_UART_BRIDGE_NVS_NAMESPACE);
+
+    espstate_monitor_chip_temperature_init();
 
     wifi_manager_init(NULL);
 

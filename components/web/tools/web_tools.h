@@ -9,6 +9,11 @@
 
 #define WEB_TOOLS_MAC_TO_STR_LENGTH 18
 
+typedef struct
+{
+    char mac[WEB_TOOLS_MAC_TO_STR_LENGTH];
+} peer_mac_req_t;
+
 void web_tools_mac_to_str(const uint8_t *mac, char *out);
 bool web_tools_str_to_mac(const char *str, uint8_t *out);
 

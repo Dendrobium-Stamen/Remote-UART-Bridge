@@ -1,52 +1,34 @@
 #include "stdio.h"
-#include "math.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
-#include "esp_timer.h"
 #include "esp_log.h"
+#include "esp_err.h"
+#include "driver/temperature_sensor.h"
 
-static const char *TAG = "CPU";
+static const char *TAG = "TEMP_SENSOR";
 
-static volatile uint64_t total_idle_time_us = 0;
-static volatile uint64_t last_idle_time_us = 0;
+temperature_sensor_handle_t temp_handle = NULL;
 
-// 空闲钩子
-bool IRAM_ATTR idle_hook(void)
+void espstate_monitor_chip_temperature_init()
 {
-    static uint64_t last_wake = 0;
-    uint64_t now = esp_timer_get_time();
+    temperature_sensor_config_t temp_sensor_config = {
+        .range_min = -10,
+        .range_max = 80,
+        .clk_src = TEMPERATURE_SENSOR_CLK_SRC_DEFAULT};
 
-    if (last_wake != 0)
+    esp_err_t ret = temperature_sensor_install(&temp_sensor_config, &temp_handle);
+    if (ret != ESP_OK)
     {
-        total_idle_time_us += (now - last_wake);
+        ESP_LOGE(TAG, "温度传感器安装失败");
+        return;
     }
-    last_wake = now;
-    return false;
+
+    ESP_ERROR_CHECK(temperature_sensor_enable(temp_handle));
 }
 
-void cpu_monitor_task(void *arg)
+float espstate_monitor_chip_temperature_read()
 {
-    esp_register_freertos_idle_hook_for_cpu(idle_hook, 0);
+    float tsens_out;
+    ESP_ERROR_CHECK(temperature_sensor_get_celsius(temp_handle, &tsens_out));
 
-    while (1)
-    {
-        uint64_t start_idle = total_idle_time_us;
-        uint64_t start_time = esp_timer_get_time();
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        uint64_t end_idle = total_idle_time_us;
-        uint64_t end_time = esp_timer_get_time();
-
-        uint64_t elapsed = end_time - start_time;
-        uint64_t idle = end_idle - start_idle;
-
-        float usage = (1.0f - ((float)idle / (float)elapsed)) * 100.0f;
-        usage = fmaxf(0.0f, fminf(100.0f, usage));
-
-        ESP_LOGI(TAG, "CPU Usage: %.2f%% | Total: %llu ms | Idle: %llu ms",
-                 usage, elapsed / 1000, idle / 1000);
-    }
+    return tsens_out;
 }

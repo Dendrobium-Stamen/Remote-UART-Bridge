@@ -1,6 +1,7 @@
 #ifndef espstate_monitor_h
 #define espstate_monitor_h
 
-void cpu_monitor_task(void *arg);
+void espstate_monitor_chip_temperature_init();
+float espstate_monitor_chip_temperature_read();
 
 #endif

@@ -17,6 +17,7 @@
 static const char *TAG = "Espnow Manager";
 
 #define ESPNOW_MANAGER_NVS_KEY "espnow_manager"
+#define ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY "espnow_label"
 
 #define ESPNOW_MANAGER_MAX_QUEUE_LENGTH 20
 
@@ -72,29 +73,39 @@ espnow_manager_error_t espnow_manager_init(espnow_manager_config_t *config)
     if (config == NULL)
         return ESPNOW_MANAGER_ERROR_INIT;
 
-    if (config->receive_message_callback == NULL)
-        ESP_LOGW(TAG, "Receive message callback is null, espnow manager will not receive any message.");
-
-    if (config->label == NULL)
-        ESP_LOGI(TAG, "Label is null, use default label.");
-
-    if (strlen(config->label) > ESPNOW_MANAGER_MAX_LABEL_LENGTH)
-    {
-        ESP_LOGW(TAG, "Label length is too long, max length is %d, use default label.", ESPNOW_MANAGER_MAX_LABEL_LENGTH);
-        uint8_t mac[6];
-        esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
-        snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
-    }
-    else
-    {
-        strncpy(espnow_manager.label, config->label, strlen(config->label));
-    }
-
-    espnow_manager.receive_message_callback = config->receive_message_callback;
-
     size_t espnow_manager_devices_size = sizeof(espnow_manager_devices_t);
     espnow_manager_devices_t *espnow_manager_devices = (espnow_manager_devices_t *)malloc(espnow_manager_devices_size);
     memset(espnow_manager_devices, 0, espnow_manager_devices_size);
+    memset(&espnow_manager, 0, sizeof(espnow_manager_t));
+
+    if (config->receive_message_callback == NULL)
+        ESP_LOGW(TAG, "Receive message callback is null, espnow manager will not receive any message.");
+
+    size_t espnow_manager_nvs_onelabel_langth = ESPNOW_MANAGER_MAX_LABEL_LENGTH;
+    if (nvs_manager_get_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, &espnow_manager_nvs_onelabel_langth) != NVS_MANAGER_OK)
+    {
+        nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+        ESP_LOGW(TAG, "NVS Label is null, use config label.");
+    }
+    else if (config->label == NULL)
+    {
+        ESP_LOGI(TAG, "Label is null, use default label.");
+        if (strlen(config->label) > ESPNOW_MANAGER_MAX_LABEL_LENGTH)
+        {
+            ESP_LOGW(TAG, "Label length is too long, max length is %d, use default label.", ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+            uint8_t mac[6];
+            esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+            snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
+        }
+        else
+        {
+            strncpy(espnow_manager.label, config->label, strlen(config->label));
+        }
+
+        nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+    }
+
+    espnow_manager.receive_message_callback = config->receive_message_callback;
 
     if (nvs_manager_get_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager_devices, &espnow_manager_devices_size) != NVS_MANAGER_OK)
     {
@@ -181,6 +192,27 @@ espnow_manager_error_t espnow_manager_get_label(char *label, uint8_t label_lengt
     }
 
     memcpy(label, espnow_manager.label, strlen(espnow_manager.label));
+    ESP_LOGI(TAG, "espnow_manager_get_label : %s", label);
+    return ESPNOW_MANAGER_OK;
+}
+
+espnow_manager_error_t espnow_manager_set_label(char *label, uint8_t label_length)
+{
+    if (label == NULL)
+        return ESPNOW_MANAGER_ERROR_LABEL_SET;
+
+    if (label_length > ESPNOW_MANAGER_MAX_LABEL_LENGTH)
+    {
+        ESP_LOGW(TAG, "Label length is too long, max length is %d, use default label.", ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+        return ESPNOW_MANAGER_ERROR_LABEL_SET;
+    }
+
+    memset(espnow_manager.label, 0, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+    memcpy(espnow_manager.label, label, label_length);
+
+    if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH) != NVS_MANAGER_OK)
+        return ESPNOW_MANAGER_ERROR_PEER_ADD;
+
     return ESPNOW_MANAGER_OK;
 }
 

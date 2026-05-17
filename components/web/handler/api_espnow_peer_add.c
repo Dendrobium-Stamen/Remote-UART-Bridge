@@ -17,13 +17,15 @@ typedef struct
     char label[ESPNOW_MANAGER_MAX_LABEL_LENGTH];
 } peer_add_req_t;
 
+char web_parse_peer_add_req_buffer[1024 * 2];
+
 static bool parse_peer_add_req(httpd_req_t *req, peer_add_req_t *out)
 {
-    char buffer[2048];
-    if (web_tools_read_body(req, buffer, sizeof(buffer)) <= 0)
+    memset(web_parse_peer_add_req_buffer, 0, 1024 * 2);
+    if (web_tools_read_body(req, web_parse_peer_add_req_buffer, sizeof(web_parse_peer_add_req_buffer)) <= 0)
         return false;
 
-    cJSON *root = cJSON_Parse(buffer);
+    cJSON *root = cJSON_Parse(web_parse_peer_add_req_buffer);
     if (!root)
         return false;
 
@@ -46,9 +48,6 @@ static bool parse_peer_add_req(httpd_req_t *req, peer_add_req_t *out)
     return true;
 }
 
-/* ------------------------------------------------------------------ */
-/*  POST /api/espnow/peer/add                                          */
-/* ------------------------------------------------------------------ */
 esp_err_t espnow_peer_add_handler(httpd_req_t *req)
 {
     peer_add_req_t body = {0};

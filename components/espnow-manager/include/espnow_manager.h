@@ -24,6 +24,7 @@ typedef enum
     ESPNOW_MANAGER_ERROR_DEINIT,
     ESPNOW_MANAGER_ERROR_NOT_INIT,
     ESPNOW_MANAGER_ERROR_LABEL_GET,
+    ESPNOW_MANAGER_ERROR_LABEL_SET,
     ESPNOW_MANAGER_ERROR_PEER_EXISTS,
     ESPNOW_MANAGER_ERROR_PEER_NOT_FOUND,
     ESPNOW_MANAGER_ERROR_PEER_FULL,
@@ -54,7 +55,9 @@ espnow_manager_error_t espnow_manager_deinit();
 espnow_manager_error_t espnow_manager_task_start();
 espnow_manager_error_t espnow_manager_task_stop();
 
+espnow_manager_error_t espnow_manager_get_mac(uint8_t *mac);
 espnow_manager_error_t espnow_manager_get_label(char *label, uint8_t label_length);
+espnow_manager_error_t espnow_manager_set_label(char *label, uint8_t label_length);
 
 espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label);
 espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac);
