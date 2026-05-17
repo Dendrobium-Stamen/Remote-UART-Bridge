@@ -19,8 +19,6 @@ size_t message_manager_send_data_usb_to_uart(uint8_t *data, size_t data_length)
         if (chunk_size > LWPKT_CFG_MAX_DATA_LEN)
             chunk_size = LWPKT_CFG_MAX_DATA_LEN;
 
-        // ESP_LOGI(TAG, "Sending chunk, len: %d", chunk_size);
-
         lwpkt_write(&message_manager.lwpkt, MESSAGE_MANAGER_COMMAND_USB_TO_UART_DATA, data + send_data_length, chunk_size);
         size_t packet_size = lwrb_get_full(&message_manager.send_rb);
         if (packet_size <= 0)

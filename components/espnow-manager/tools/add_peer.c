@@ -2,9 +2,12 @@
 #include "string.h"
 
 #include "esp_err.h"
+#include "esp_log.h"
 #include "esp_now.h"
 
 #include "espnow_manager.h"
+
+static const char *TAG = "Espnow manager tools add peer";
 
 espnow_manager_error_t espnow_manager_tools_add_peer(uint8_t *mac)
 {
@@ -14,6 +17,9 @@ espnow_manager_error_t espnow_manager_tools_add_peer(uint8_t *mac)
     esp_now_peer_info.ifidx = WIFI_IF_AP;
     esp_now_peer_info.encrypt = false;
     esp_err_t esp_error = esp_now_add_peer(&esp_now_peer_info);
+
+    ESP_LOGD(TAG, "%s", esp_err_to_name(esp_error));
+
     if (esp_error != ESP_OK)
     {
         if (esp_error == ESP_ERR_ESPNOW_EXIST)

@@ -84,25 +84,30 @@ espnow_manager_error_t espnow_manager_init(espnow_manager_config_t *config)
     size_t espnow_manager_nvs_onelabel_langth = ESPNOW_MANAGER_MAX_LABEL_LENGTH;
     if (nvs_manager_get_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, &espnow_manager_nvs_onelabel_langth) != NVS_MANAGER_OK)
     {
-        nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
         ESP_LOGW(TAG, "NVS Label is null, use config label.");
-    }
-    else if (config->label == NULL)
-    {
-        ESP_LOGI(TAG, "Label is null, use default label.");
-        if (strlen(config->label) > ESPNOW_MANAGER_MAX_LABEL_LENGTH)
+        if (config->label != NULL)
         {
-            ESP_LOGW(TAG, "Label length is too long, max length is %d, use default label.", ESPNOW_MANAGER_MAX_LABEL_LENGTH);
-            uint8_t mac[6];
-            esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
-            snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
-        }
-        else
-        {
-            strncpy(espnow_manager.label, config->label, strlen(config->label));
-        }
+            if (strlen(config->label) > ESPNOW_MANAGER_MAX_LABEL_LENGTH)
+            {
+                ESP_LOGW(TAG, "Label length is too long, max length is %d, use default label.", ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+                uint8_t mac[6];
+                esp_read_mac(mac, ESP_MAC_WIFI_STA);
+                snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
+            }
+            else
+                strncpy(espnow_manager.label, config->label, strlen(config->label));
 
-        nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+            ESP_LOGI(TAG, "Use config label : %s", espnow_manager.label);
+            nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+        }
+        else if (config->label == NULL)
+        {
+            uint8_t mac[6];
+            esp_read_mac(mac, ESP_MAC_WIFI_STA);
+            snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
+            ESP_LOGI(TAG, "Use default label : %s", espnow_manager.label);
+            nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
+        }
     }
 
     espnow_manager.receive_message_callback = config->receive_message_callback;
@@ -110,7 +115,9 @@ espnow_manager_error_t espnow_manager_init(espnow_manager_config_t *config)
     if (nvs_manager_get_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager_devices, &espnow_manager_devices_size) != NVS_MANAGER_OK)
     {
         nvs_manager_erase_all();
+        memset(espnow_manager_devices, 0, espnow_manager_devices_size);
         nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager_devices, espnow_manager_devices_size);
+        nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
         ESP_LOGW(TAG, "Failed to get espnow manager from nvs, erase all nvs, load default espnow manager.");
     }
 
@@ -241,6 +248,8 @@ espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label)
     if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager.devices, espnow_manager_devices_size))
         return ESPNOW_MANAGER_ERROR_PEER_ADD;
 
+    ESP_LOGI(TAG, "add peer label : %s", label);
+
     return espnow_manager_tools_add_peer(mac);
 }
 
@@ -254,6 +263,7 @@ espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac)
         if (memcmp(espnow_manager.devices->device[i].mac, mac, ESPNOW_MANAGER_MAC_LEN) == 0)
         {
             espnow_manager.devices->current_device_count--;
+            memset(espnow_manager.devices->device[i].label, 0, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
             memcpy(espnow_manager.devices->device[i].mac, espnow_manager.devices->device[espnow_manager.devices->current_device_count].mac, ESPNOW_MANAGER_MAC_LEN);
             memcpy(espnow_manager.devices->device[i].label, espnow_manager.devices->device[espnow_manager.devices->current_device_count].label, //
                    strlen(espnow_manager.devices->device[espnow_manager.devices->current_device_count].label) + 1);
@@ -263,6 +273,8 @@ espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac)
     size_t espnow_manager_devices_size = sizeof(espnow_manager_devices_t);
     if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager.devices, espnow_manager_devices_size))
         return ESPNOW_MANAGER_ERROR_PEER_DEL;
+
+    ESP_LOGI(TAG, "del peer label : " MACSTR "", MAC2STR(mac));
 
     return esp_now_del_peer(mac);
 }
@@ -360,8 +372,12 @@ espnow_manager_error_t espnow_manager_send_to_enable_mac(uint8_t *data, size_t d
     {
         if (espnow_manager.devices->device[i].is_enable)
         {
-            if (esp_now_send(espnow_manager.devices->device[i].mac, data, data_length) != ESP_OK)
+            esp_err_t err = esp_now_send(espnow_manager.devices->device[i].mac, data, data_length);
+            if (err != ESP_OK)
+            {
+                ESP_LOGW(TAG, "%s", esp_err_to_name(err));
                 return ESPNOW_MANAGER_ERROR_SEND;
+            }
         }
     }
 

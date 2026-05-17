@@ -29,7 +29,7 @@ wifi_manager_error_t wifi_manager_init(wifi_manager_config_t *config)
     if (config == NULL)
     {
         uint8_t mac[6];
-        esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+        esp_read_mac(mac, ESP_MAC_WIFI_STA);
         snprintf(ssid, sizeof(ssid), MACSTR, MAC2STR(mac));
         ESP_LOGI(TAG, "SSID: %s", ssid);
 
