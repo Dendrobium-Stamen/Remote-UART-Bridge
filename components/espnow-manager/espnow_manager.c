@@ -228,6 +228,9 @@ espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label)
     if (mac == NULL)
         return ESPNOW_MANAGER_ERROR_PEER_ADD;
 
+    if (espnow_manager.devices->current_device_count >= ESPNOW_MANAGER_MAX_PEER_DEVICES)
+        return ESPNOW_MANAGER_ERROR_PEER_ADD;
+
     espnow_manager_error_t error = espnow_manager_tools_add_peer(mac);
     if (error != ESPNOW_MANAGER_OK)
         return error;
@@ -241,6 +244,8 @@ espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label)
     {
         sprintf(espnow_manager.devices->device[espnow_manager.devices->current_device_count].label, " " MACSTR " ", MAC2STR(mac));
     }
+
+    espnow_manager.devices->device[espnow_manager.devices->current_device_count].is_enable = true;
 
     espnow_manager.devices->current_device_count++;
 
@@ -267,6 +272,8 @@ espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac)
             memcpy(espnow_manager.devices->device[i].mac, espnow_manager.devices->device[espnow_manager.devices->current_device_count].mac, ESPNOW_MANAGER_MAC_LEN);
             memcpy(espnow_manager.devices->device[i].label, espnow_manager.devices->device[espnow_manager.devices->current_device_count].label, //
                    strlen(espnow_manager.devices->device[espnow_manager.devices->current_device_count].label) + 1);
+            espnow_manager.devices->device[i].is_enable = false;
+            break;
         }
     }
 
@@ -377,6 +384,11 @@ espnow_manager_error_t espnow_manager_send_to_enable_mac(uint8_t *data, size_t d
     {
         if (espnow_manager.devices->device[i].is_enable)
         {
+            if (esp_now_is_peer_exist(espnow_manager.devices->device[i].mac) == false)
+            {
+                espnow_manager_tools_add_peer(espnow_manager.devices->device[i].mac);
+            }
+
             esp_err_t err = esp_now_send(espnow_manager.devices->device[i].mac, data, data_length);
             if (err != ESP_OK)
             {

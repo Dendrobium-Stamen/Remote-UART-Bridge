@@ -32,9 +32,11 @@ size_t message_manager_send_data_usb_to_uart(uint8_t *data, size_t data_length)
         {
             lwrb_reset(&message_manager.send_rb);
             ESP_LOGW(TAG, "Failed to send data to peer enable mac, error: %d", error);
+            free(packet_data);
             return 0;
         }
 
+        free(packet_data);
         lwrb_reset(&message_manager.send_rb);
         send_data_length += chunk_size;
     }

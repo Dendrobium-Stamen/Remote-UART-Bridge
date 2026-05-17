@@ -12,8 +12,6 @@ static const char *TAG = "Espnow manager tools add peer";
 
 espnow_manager_error_t espnow_manager_tools_add_peer(uint8_t *mac)
 {
-    esp_now_del_peer(mac);
-
     esp_now_peer_info_t esp_now_peer_info = {};
     memcpy(esp_now_peer_info.peer_addr, mac, ESP_NOW_ETH_ALEN);
     esp_now_peer_info.channel = 0;
