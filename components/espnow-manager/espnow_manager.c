@@ -91,7 +91,7 @@ espnow_manager_error_t espnow_manager_init(espnow_manager_config_t *config)
             {
                 ESP_LOGW(TAG, "Label length is too long, max length is %d, use default label.", ESPNOW_MANAGER_MAX_LABEL_LENGTH);
                 uint8_t mac[6];
-                esp_read_mac(mac, ESP_MAC_WIFI_STA);
+                esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
                 snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
             }
             else
@@ -103,7 +103,7 @@ espnow_manager_error_t espnow_manager_init(espnow_manager_config_t *config)
         else if (config->label == NULL)
         {
             uint8_t mac[6];
-            esp_read_mac(mac, ESP_MAC_WIFI_STA);
+            esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
             snprintf(espnow_manager.label, sizeof(espnow_manager.label), MACSTR, MAC2STR(mac));
             ESP_LOGI(TAG, "Use default label : %s", espnow_manager.label);
             nvs_manager_set_blob(ESPNOW_MANAGER_NVS_ONESELF_LABEL_KEY, espnow_manager.label, ESPNOW_MANAGER_MAX_LABEL_LENGTH);
@@ -250,7 +250,7 @@ espnow_manager_error_t espnow_manager_add_peer_mac(uint8_t *mac, char *label)
 
     ESP_LOGI(TAG, "add peer label : %s", label);
 
-    return espnow_manager_tools_add_peer(mac);
+    return ESPNOW_MANAGER_OK;
 }
 
 espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac)
@@ -274,9 +274,14 @@ espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac)
     if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager.devices, espnow_manager_devices_size))
         return ESPNOW_MANAGER_ERROR_PEER_DEL;
 
-    ESP_LOGI(TAG, "del peer label : " MACSTR "", MAC2STR(mac));
+    if (esp_now_del_peer(mac) != ESP_OK)
+    {
+        ESP_LOGI(TAG, "del peer label : " MACSTR " error", MAC2STR(mac));
+        return ESPNOW_MANAGER_ERROR_PEER_DEL;
+    }
 
-    return esp_now_del_peer(mac);
+    ESP_LOGI(TAG, "del peer label : " MACSTR " success", MAC2STR(mac));
+    return ESPNOW_MANAGER_OK;
 }
 
 espnow_manager_error_t espnow_manager_temporary_add_peer_mac(uint8_t *mac)

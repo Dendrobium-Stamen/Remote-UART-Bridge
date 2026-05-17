@@ -30,7 +30,7 @@ esp_err_t system_status_handler(httpd_req_t *req)
         float temp = espstate_monitor_chip_temperature_read();
 
         uint8_t mac[6];
-        esp_read_mac(mac, ESP_MAC_WIFI_STA);
+        esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
         char mac_str[WEB_TOOLS_MAC_TO_STR_LENGTH];
         web_tools_mac_to_str(mac, mac_str);
 

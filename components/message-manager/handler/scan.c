@@ -35,7 +35,7 @@ message_manager_error_t message_manager_scan_handler(uint8_t *src_mac, uint8_t *
 
     espnow_manager_temporary_add_peer_mac(src_mac);
 
-    espnow_manager_error_t error = espnow_manager_send_to_mac(message_manager_espnow_broadcast_mac, packet_data, packet_size);
+    espnow_manager_error_t error = espnow_manager_send_to_mac(src_mac, packet_data, packet_size);
     if (error != ESPNOW_MANAGER_OK)
     {
         free(packet_data);

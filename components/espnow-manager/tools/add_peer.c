@@ -4,6 +4,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_now.h"
+#include "esp_mac.h"
 
 #include "espnow_manager.h"
 
@@ -11,6 +12,8 @@ static const char *TAG = "Espnow manager tools add peer";
 
 espnow_manager_error_t espnow_manager_tools_add_peer(uint8_t *mac)
 {
+    esp_now_del_peer(mac);
+
     esp_now_peer_info_t esp_now_peer_info = {};
     memcpy(esp_now_peer_info.peer_addr, mac, ESP_NOW_ETH_ALEN);
     esp_now_peer_info.channel = 0;
@@ -18,7 +21,7 @@ espnow_manager_error_t espnow_manager_tools_add_peer(uint8_t *mac)
     esp_now_peer_info.encrypt = false;
     esp_err_t esp_error = esp_now_add_peer(&esp_now_peer_info);
 
-    ESP_LOGD(TAG, "%s", esp_err_to_name(esp_error));
+    ESP_LOGD(TAG, "error : %s, mac : " MACSTR " ", esp_err_to_name(esp_error), MAC2STR(mac));
 
     if (esp_error != ESP_OK)
     {
