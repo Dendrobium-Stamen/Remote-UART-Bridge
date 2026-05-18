@@ -8,8 +8,10 @@
 ┌─────────┐   USB CDC-ACM    ┌──────────────┐   ESP-NOW    ┌──────────────┐   UART   ┌──────────┐
 │   PC    │ ◄──────────────► │ Server (S3)  │ ◄──────────► │ Client (C3)  │ ◄──────► │ 目标设备  │
 └─────────┘                  └──────────────┘              └──────────────┘          └──────────┘
-                                     │
-                              Wi-Fi AP (Web 管理界面)
+                                     │                            │
+                              Wi-Fi AP (Web 管理)         Wi-Fi AP (Web 管理)
+                                     │                            │
+                                          双向配对（互相添加 Peer）
 ```
 
 系统由两种角色组成：
@@ -143,7 +145,16 @@ idf.py flash
 
 1. 烧录 Server 固件到 ESP32-S3，通过 USB 连接 PC
 2. 烧录 Client 固件到 ESP32-C3，通过 UART 连接目标设备
-3. PC 连接 Server 的 Wi-Fi AP，打开 Web 管理页面
-4. 点击扫描发现 Client 设备，添加为 Peer
+3. PC 连接 Server 的 Wi-Fi AP，打开 Web 管理页面；同样连接 Client 的 Wi-Fi AP，打开其 Web 管理页面
+4. 在 Server 端扫描发现 Client 设备，添加为 Peer；在 Client 端扫描发现 Server 设备，同样添加为 Peer（双向配对）
 5. PC 端打开串口终端（如 minicom、PuTTY），连接 Server 的 USB 串口
 6. 即可通过无线方式与远端目标设备的串口交互
+
+## 第三方开源库
+
+本项目使用了以下第三方开源库：
+
+| 库 | 作者 | 许可证 | 来源 |
+|------|------|--------|------|
+| [LwPKT](https://github.com/MaJerle/lwpkt) | Tilen MAJERLE | MIT | 轻量级封包协议 |
+| [LwRB](https://github.com/MaJerle/lwrb) | Tilen MAJERLE | MIT | 轻量级环形缓冲区 |
