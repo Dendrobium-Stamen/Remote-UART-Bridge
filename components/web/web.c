@@ -28,6 +28,7 @@ web_error_t web_init(web_config_t *config)
 
         {.uri = "/api/system/status", .method = HTTP_GET, .handler = system_status_handler},
         {.uri = "/api/system/label", .method = HTTP_POST, .handler = system_label_handler},
+        {.uri = "/api/ota/upload", .method = HTTP_POST, .handler = ota_upload_handler},
 
         {.uri = "/api/espnow/peers", .method = HTTP_GET, .handler = espnow_peers_handler},
         {.uri = "/api/espnow/scan", .method = HTTP_POST, .handler = espnow_scan_handler},

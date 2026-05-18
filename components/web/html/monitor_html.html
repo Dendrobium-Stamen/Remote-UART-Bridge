@@ -210,20 +210,21 @@ dropZone.ondragleave=()=>dropZone.classList.remove('drag-over');
 dropZone.ondrop=e=>{e.preventDefault();dropZone.classList.remove('drag-over');if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0])};
 fileInput.onchange=()=>{if(fileInput.files.length)handleFile(fileInput.files[0])};
 
+var selectedFile=null;
 function handleFile(f){
   document.getElementById('file-name').textContent=f.name+' ('+(f.size/1024).toFixed(1)+' KB)';
-  upgradeBtn.dataset.file=f;
+  selectedFile=f;
   otaProgress.style.width='0%';
   otaProgress.classList.remove('complete');
 }
 
 upgradeBtn.onclick=()=>{
-  var f=upgradeBtn.dataset.file;
-  if(!f)return;
+  if(!selectedFile)return;
+  var f=selectedFile;
   upgradeBtn.disabled=true;upgradeBtn.textContent='Uploading...';
-  var fd=new FormData();fd.append('file',f);
   var xhr=new XMLHttpRequest();
   xhr.open('POST','/api/ota/upload');
+  xhr.setRequestHeader('Content-Type','application/octet-stream');
   xhr.upload.onprogress=e=>{
     if(e.lengthComputable){
       var pct=e.loaded/e.total*100;
@@ -237,7 +238,7 @@ upgradeBtn.onclick=()=>{
   xhr.onerror=()=>{
     upgradeBtn.disabled=false;upgradeBtn.textContent='Upgrade';
   };
-  xhr.send(fd);
+  xhr.send(f);
 };
 </script>
 </body>

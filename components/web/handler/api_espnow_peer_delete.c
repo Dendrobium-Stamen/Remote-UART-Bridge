@@ -35,9 +35,6 @@ static bool parse_peer_mac_req(httpd_req_t *req, peer_mac_req_t *out)
     return true;
 }
 
-/* ------------------------------------------------------------------ */
-/*  POST /api/espnow/peer/delete                                       */
-/* ------------------------------------------------------------------ */
 esp_err_t espnow_peer_delete_handler(httpd_req_t *req)
 {
     peer_mac_req_t body = {0};
