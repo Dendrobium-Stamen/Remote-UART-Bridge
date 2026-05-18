@@ -199,7 +199,7 @@ espnow_manager_error_t espnow_manager_get_label(char *label, uint8_t label_lengt
     }
 
     memcpy(label, espnow_manager.label, strlen(espnow_manager.label));
-    ESP_LOGI(TAG, "espnow_manager_get_label : %s", label);
+    ESP_LOGD(TAG, "espnow_manager_get_label : %s", label);
     return ESPNOW_MANAGER_OK;
 }
 
@@ -344,6 +344,10 @@ espnow_manager_error_t espnow_manager_enable_mac(uint8_t *mac)
         }
     }
 
+    size_t espnow_manager_devices_size = sizeof(espnow_manager_devices_t);
+    if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager.devices, espnow_manager_devices_size))
+        return ESPNOW_MANAGER_ERROR_ENABLE_MAC;
+
     return ESPNOW_MANAGER_OK;
 }
 
@@ -360,6 +364,10 @@ espnow_manager_error_t espnow_manager_disable_mac(uint8_t *mac)
             break;
         }
     }
+
+    size_t espnow_manager_devices_size = sizeof(espnow_manager_devices_t);
+    if (nvs_manager_set_blob(ESPNOW_MANAGER_NVS_KEY, espnow_manager.devices, espnow_manager_devices_size))
+        return ESPNOW_MANAGER_ERROR_DISABLE_MAC;
 
     return ESPNOW_MANAGER_OK;
 }

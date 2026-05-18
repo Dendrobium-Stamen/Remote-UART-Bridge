@@ -46,7 +46,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 .btn-primary:hover{box-shadow:0 4px 16px rgba(124,107,170,.35);transform:translateY(-1px)}
 .btn-outline{background:var(--bg-card);color:var(--primary-light);border:1px solid var(--border)}
 .btn-outline:hover{border-color:var(--primary-lighter);background:rgba(124,107,170,.04)}
-.btn-sm{padding:5px 12px;font-size:11px;border-radius:6px}
 .btn-danger{background:transparent;color:var(--danger);border:1px solid transparent;padding:4px 8px;font-size:13px}
 .btn-danger:hover{background:rgba(212,160,176,.08)}
 .btn-group{display:flex;gap:10px;margin-bottom:18px}
@@ -73,20 +72,6 @@ input[type=text]{background:var(--bg);border:1px solid var(--border);border-radi
 input[type=text]:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(124,107,170,.1);background:#fff}
 input[type=text]::placeholder{color:var(--text-muted)}
 
-/* Log box */
-.log-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text-muted);max-height:160px;overflow-y:auto;scroll-behavior:smooth}
-.log-box::-webkit-scrollbar{width:4px}
-.log-box::-webkit-scrollbar-track{background:transparent}
-.log-box::-webkit-scrollbar-thumb{background:var(--primary-lighter);border-radius:2px}
-.log-entry{margin-bottom:3px;animation:logIn .3s ease-out}
-.log-recv{color:var(--info)}
-.log-ok{color:var(--success)}
-.log-fail{color:var(--danger)}
-.log-send{color:var(--primary)}
-.log-sys{color:var(--text-muted)}
-@keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-
-.send-row{display:flex;gap:8px;margin-bottom:12px}
 .empty{text-align:center;padding:12px;color:var(--primary-lighter);font-size:11px}
 
 /* Scan animation */
@@ -160,18 +145,6 @@ input[type=text]::placeholder{color:var(--text-muted)}
     <div class="empty" id="peer-empty" style="display:none">No peers added</div>
   </div>
 
-  <!-- Test send -->
-  <div class="card">
-    <div class="card-label">ESP-NOW Test</div>
-    <div class="send-row">
-      <input type="text" id="target-mac" placeholder="Target MAC (AA:BB:CC:DD:EE:FF)">
-      <input type="text" id="send-data" placeholder="Data" style="max-width:120px">
-      <button class="btn btn-primary btn-sm" onclick="doTestSend()">Send</button>
-    </div>
-    <div class="log-box" id="espnow-log">
-      <div class="log-sys">// ESP-NOW test log</div>
-    </div>
-  </div>
 </div>
 
 <!-- Add peer modal -->
@@ -320,24 +293,6 @@ function doRemove(mac){
   fetch('/api/espnow/peer/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac:mac})})
   .then(function(){loadPeers()})
   .catch(function(){});
-}
-
-/* ---- ESP-NOW test send ---- */
-function doTestSend(){
-  var mac=document.getElementById('target-mac').value.trim();
-  var data=document.getElementById('send-data').value.trim();
-  if(!mac||!data)return;
-
-  fetch('/api/espnow/test/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac:mac,data:data})})
-  .then(function(r){return r.json()})
-  .then(function(d){
-    var log=document.getElementById('espnow-log');
-    var ts=new Date().toLocaleTimeString();
-    var entry=document.createElement('div');
-    entry.className='log-entry '+(d.ok?'log-ok':'log-fail');
-    entry.textContent='['+ts+'] '+(d.ok?'OK':'FAIL')+' -> '+mac+': '+data;
-    log.appendChild(entry);log.scrollTop=log.scrollHeight;
-  }).catch(function(){});
 }
 
 loadPeers();

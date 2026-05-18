@@ -52,6 +52,6 @@ esp_err_t espnow_peer_disable_handler(httpd_req_t *req)
         return web_tools_send_json_error(req, "Failed to disable peer");
     }
 
-    ESP_LOGI(TAG, "Peer disabled: %s", body.mac);
+    ESP_LOGD(TAG, "Peer disabled: %s", body.mac);
     return web_tools_send_json_ok(req);
 }
