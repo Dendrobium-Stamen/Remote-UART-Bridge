@@ -384,11 +384,6 @@ espnow_manager_error_t espnow_manager_send_to_enable_mac(uint8_t *data, size_t d
     {
         if (espnow_manager.devices->device[i].is_enable)
         {
-            if (esp_now_is_peer_exist(espnow_manager.devices->device[i].mac) == false)
-            {
-                espnow_manager_tools_add_peer(espnow_manager.devices->device[i].mac);
-            }
-
             esp_err_t err = esp_now_send(espnow_manager.devices->device[i].mac, data, data_length);
             if (err != ESP_OK)
             {
