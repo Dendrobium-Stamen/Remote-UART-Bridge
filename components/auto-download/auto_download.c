@@ -1,5 +1,8 @@
 #include "stdio.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include "esp_log.h"
 #include "driver/gpio.h"
 
@@ -47,8 +50,35 @@ auto_download_error_t auto_download_init(auto_download_config_t *config)
 
 bool auto_download_set_gpio_level(bool dtr_level, bool rts_level)
 {
-    gpio_set_level(auto_download.dtr_gpio_num, dtr_level);
-    gpio_set_level(auto_download.rts_gpio_num, rts_level);
+    static bool download_prepared = false;
+
+    if (dtr_level == 0 && rts_level == 1)
+    {
+        gpio_set_level(auto_download.dtr_gpio_num, 0);
+        gpio_set_level(auto_download.rts_gpio_num, 1);
+        download_prepared = true;
+    }
+    else if (dtr_level == 1 && rts_level == 0)
+    {
+        if (download_prepared)
+        {
+            gpio_set_level(auto_download.dtr_gpio_num, 0);
+            gpio_set_level(auto_download.rts_gpio_num, 0);
+        }
+        else
+        {
+            gpio_set_level(auto_download.dtr_gpio_num, 1);
+            gpio_set_level(auto_download.rts_gpio_num, 0);
+        }
+    }
+    else
+    {
+        gpio_set_level(auto_download.rts_gpio_num, 1);
+        if (download_prepared)
+            vTaskDelay(pdMS_TO_TICKS(10));
+        gpio_set_level(auto_download.dtr_gpio_num, 1);
+        download_prepared = false;
+    }
 
     return true;
 }
