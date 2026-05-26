@@ -83,7 +83,7 @@ void app_main(void)
 
 #ifdef CONFIG_REMOTE_UART_ROLE_CLIENT
     auto_download_config_t auto_download_config = {
-        .dtr_gpio_num = AUTO_DOWNLOAD_DTS_GPIO_NUM,
+        .dtr_gpio_num = AUTO_DOWNLOAD_DTR_GPIO_NUM,
         .rts_gpio_num = AUTO_DOWNLOAD_RTS_GPIO_NUM,
     };
 
