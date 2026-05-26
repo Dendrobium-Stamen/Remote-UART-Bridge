@@ -1,5 +1,7 @@
 #include "stdio.h"
 #include "stdbool.h"
+#include "string.h"
+#include "stdlib.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -296,11 +298,18 @@ espnow_manager_error_t espnow_manager_del_peer_mac(uint8_t *mac)
 
 espnow_manager_error_t espnow_manager_temporary_add_peer_mac(uint8_t *mac)
 {
+    if (esp_now_is_peer_exist(mac) == true)
+        return ESPNOW_MANAGER_OK;
+
     return espnow_manager_tools_add_peer(mac);
 }
 
 espnow_manager_error_t espnow_manager_temporary_del_peer_mac(uint8_t *mac)
 {
+    for (uint8_t i = 0; i < espnow_manager.devices->current_device_count; i++)
+        if (memcmp(mac, espnow_manager.devices->device[i].mac, ESPNOW_MANAGER_MAC_LEN) == 0)
+            return ESPNOW_MANAGER_OK;
+
     if (esp_now_del_peer(mac) != ESP_OK)
         return ESPNOW_MANAGER_ERROR_PEER_DEL;
 
