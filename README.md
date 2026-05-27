@@ -149,7 +149,7 @@ idf.py flash
 4. 在 Server 端扫描发现 Client 设备，添加为 Peer；在 Client 端扫描发现 Server 设备，同样添加为 Peer（双向配对）
 5. PC 端打开串口终端（如 minicom、PuTTY），连接 Server 的 USB 串口
 6. 即可通过无线方式与远端目标设备的串口交互
-7. 如果需要自动下载功能，请将RTS对应引脚链接目标芯片的EN引脚，DTR对应引脚链接目标芯片的BOOT引脚
+7. 如果需要自动下载功能，请将RTS对应引脚链接目标芯片的BOOT引脚，DTR对应引脚链接目标芯片的EN引脚
 
 ## 第三方开源库
 
